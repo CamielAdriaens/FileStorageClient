@@ -1,9 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
-import { FileUpload } from './pages/FileUpload';
 import { jwtDecode } from 'jwt-decode'; // Correct import for jwt-decode
 import { useEffect } from 'react';
 import { useState } from 'react';
+import { FileManagement } from './pages/FileManagement';
+
 
 const isAuthenticated = () => {
     const token = localStorage.getItem('token');  // Check if token exists
@@ -45,10 +46,10 @@ export const AppRoutes = () => {
             <Routes>
                 <Route path="/" Component={HomePage} />
                 <Route 
-                    path="/file-upload" 
+                    path="/file" 
                     element={
                         <ProtectedRoute>
-                            <FileUpload />
+                            <FileManagement />
                         </ProtectedRoute>
                     } 
                 />
