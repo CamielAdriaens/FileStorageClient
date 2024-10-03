@@ -4,16 +4,20 @@ export const FileManagement = () => {
   const [files, setFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
 
-  // Fetch the list of files from the backend
-  const fetchFiles = async () => {
+  async function fetchFiles() {
     try {
-      const response = await fetch('http://localhost:19269/api/files');
-      const data = await response.json();
-      setFiles(data); // Set the list of files
+        const response = await fetch('https://localhost:44374/api/files');
+        if (!response.ok) {
+            throw new Error(`Error fetching files: ${response.status} ${response.statusText}`);
+        }
+        const files = await response.json();
+        setFiles(files);  // Update the state with the fetched files
+        console.log('Fetched files:', files);
     } catch (error) {
-      console.error('Error fetching files:', error);
+        console.error('Error fetching files:', error.message);
     }
-  };
+}
+
 
   // Handle file selection for upload
   const handleFileChange = (event) => {
@@ -48,22 +52,22 @@ export const FileManagement = () => {
     }
   };
 
-  // Handle file download
   const handleFileDownload = async (fileId, fileName) => {
+    console.log("Downloading file with ID:", fileId);  // Add this line to check the fileId
     try {
       const response = await fetch(`http://localhost:19269/api/files/download/${fileId}`, {
         method: 'GET',
       });
-
+      // Check if the response is OK
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
-        link.setAttribute('download', fileName);
+        link.setAttribute('download', fileName); // Set the file name for download
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
+        document.body.removeChild(link);  // Clean up the link after download
       } else {
         console.error('File download failed:', response.statusText);
       }
@@ -71,6 +75,7 @@ export const FileManagement = () => {
       console.error('Error downloading file:', error);
     }
   };
+  
 
   // Fetch files when the component mounts
   useEffect(() => {
@@ -94,9 +99,9 @@ export const FileManagement = () => {
           <li>No files uploaded yet.</li>
         ) : (
           files.map((file) => (
-            <li key={file._id}>
+            <li key={file.id}>
               {file.filename} ({(file.length / 1024).toFixed(2)} KB)
-              <button onClick={() => handleFileDownload(file._id, file.filename)}>
+              <button onClick={() => handleFileDownload(file.id, file.filename)}>
                 Download
               </button>
             </li>
