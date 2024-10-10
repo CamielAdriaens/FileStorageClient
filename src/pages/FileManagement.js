@@ -18,6 +18,7 @@ export const FileManagement = () => {
     } catch (error) {
       console.error('Error fetching files:', error.message);
     }
+    
   }
 
   // Handle file selection for upload
@@ -101,8 +102,8 @@ export const FileManagement = () => {
         ) : (
           files.map((file) => (
             <li key={file.id}>
-              {file.filename} <span>({(file.length / 1024).toFixed(2)} KB)</span>
-              <button className="btn" onClick={() => handleFileDownload(file.id, file.filename)}>
+              {file.fileName} <span>({(file.length / 1024).toFixed(2)} KB)</span>
+              <button className="btn" onClick={() => handleFileDownload(file.id, file.fileName)}>
                 Download
               </button>
             </li>
