@@ -8,7 +8,7 @@ export const HomePage = () => {
   return (
     <div className="homepage"> {/* Apply the 'homepage' class */}
       <header className="header">
-        <div className="logo">FileStorage</div>
+        <div className="logo">Welcome!</div>
         {Object.keys(user).length !== 0 && (
           <button className="signout-btn" onClick={handleSignOut}>
             Sign Out

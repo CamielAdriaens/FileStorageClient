@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import '../App.css'; // Import the global styles
+import axios from 'axios';
 
 export const FileManagement = () => {
   const [files, setFiles] = useState([]);
@@ -18,7 +19,6 @@ export const FileManagement = () => {
     } catch (error) {
       console.error('Error fetching files:', error.message);
     }
-    
   }
 
   // Handle file selection for upload
@@ -79,6 +79,26 @@ export const FileManagement = () => {
     }
   };
 
+  // Handle file deletion
+  const handleFileDelete = async (fileId) => {
+    if (!window.confirm('Are you sure you want to delete this file?')) return;
+
+    try {
+      const response = await fetch(`http://localhost:19269/api/files/delete/${fileId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        alert('File deleted successfully.');
+        fetchFiles(); // Refresh the list of files after deleting
+      } else {
+        console.error('File deletion failed:', response.statusText);
+      }
+    } catch (error) {
+      console.error('Error deleting file:', error);
+    }
+  };
+
   // Fetch files when the component mounts
   useEffect(() => {
     fetchFiles();
@@ -105,6 +125,13 @@ export const FileManagement = () => {
               {file.fileName} <span>({(file.length / 1024).toFixed(2)} KB)</span>
               <button className="btn" onClick={() => handleFileDownload(file.id, file.fileName)}>
                 Download
+              </button>
+              <button
+                className="btn delete-btn"
+                onClick={() => handleFileDelete(file.id)}
+                style={{ marginLeft: '10px' }}
+              >
+                Delete
               </button>
             </li>
           ))

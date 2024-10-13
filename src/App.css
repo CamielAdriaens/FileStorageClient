@@ -129,70 +129,6 @@ body {
   font-size: 0.9rem;
 }
 
-/* Responsive Design (Media Queries) */
-
-/* Small Devices (Tablets, Smartphones) */
-@media (max-width: 768px) {
-  .main-content {
-      padding: 30px 15px;
-  }
-
-  .header {
-      flex-direction: column;
-      text-align: center;
-  }
-
-  .welcome-section h1 {
-      font-size: 2rem;
-  }
-
-  .welcome-section p {
-      font-size: 1rem;
-  }
-
-  .user-info-section {
-      width: 90%;
-      padding: 15px;
-  }
-
-  .profile-pic {
-      width: 80px;
-      height: 80px;
-  }
-
-  .footer {
-      font-size: 0.8rem;
-  }
-}
-
-/* Very Small Devices (Mobile) */
-@media (max-width: 480px) {
-  .header {
-      padding: 15px;
-  }
-
-  .welcome-section h1 {
-      font-size: 1.8rem;
-  }
-
-  .welcome-section p {
-      font-size: 0.9rem;
-  }
-
-  .user-info-section {
-      padding: 10px;
-      box-shadow: none;
-      margin-top: 15px;
-  }
-
-  .profile-pic {
-      width: 60px;
-      height: 60px;
-  }
-
-  .btn, .signout-btn {
-      padding: 8px 12px;
-  }
 /* Navbar Styles */
 .navbar {
   display: flex;
@@ -229,8 +165,42 @@ body {
   color: #ffdd57;
 }
 
-/* Responsive Navbar */
+/* Responsive Design (Media Queries) */
+
+/* Small Devices (Tablets, Smartphones) */
 @media (max-width: 768px) {
+  .main-content {
+    padding: 30px 15px;
+  }
+
+  .header {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .welcome-section h1 {
+    font-size: 2rem;
+  }
+
+  .welcome-section p {
+    font-size: 1rem;
+  }
+
+  .user-info-section {
+    width: 90%;
+    padding: 15px;
+  }
+
+  .profile-pic {
+    width: 80px;
+    height: 80px;
+  }
+
+  .footer {
+    font-size: 0.8rem;
+  }
+
+  /* Responsive Navbar */
   .navbar {
     flex-direction: column;
     text-align: center;
@@ -241,4 +211,33 @@ body {
     gap: 10px;
   }
 }
+
+/* Very Small Devices (Mobile) */
+@media (max-width: 480px) {
+  .header {
+    padding: 15px;
+  }
+
+  .welcome-section h1 {
+    font-size: 1.8rem;
+  }
+
+  .welcome-section p {
+    font-size: 0.9rem;
+  }
+
+  .user-info-section {
+    padding: 10px;
+    box-shadow: none;
+    margin-top: 15px;
+  }
+
+  .profile-pic {
+    width: 60px;
+    height: 60px;
+  }
+
+  .btn, .signout-btn {
+    padding: 8px 12px;
+  }
 }

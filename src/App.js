@@ -1,9 +1,12 @@
-import './App.css';
-import { AppRoutes } from './AppRoutes.js'; // Import the AppRoutes component
+import './App.css';  // Global CSS file
+import { AppRoutes } from './AppRoutes';  // Import the AppRoutes component
 
 function App() {
   return (
-    <AppRoutes />  // Render AppRoutes which contains all the routing logic
+    <div className="app">
+      {/* Navbar will be included in every page as part of App.js */}
+      <AppRoutes />
+    </div>
   );
 }
 
