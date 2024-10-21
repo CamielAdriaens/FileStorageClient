@@ -29,19 +29,18 @@ export function useGoogleAuth() {
     }
   }
 
-  // Function to send the JWT token to the backend
   async function authenticateWithBackend(token) {
     try {
-      const response = await fetch('http://localhost:19269/api/auth/google', {
+      const response = await fetch('https://localhost:44374/api/auth/google', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ token }), // Send token to backend
+        body: JSON.stringify({ credential: token }), // Send the token as 'credential'
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
         setBackendAuth(data); // Handle successful backend response
         console.log("Backend authentication successful:", data);
@@ -52,6 +51,7 @@ export function useGoogleAuth() {
       console.error("Error sending token to backend:", error);
     }
   }
+  
 
   function handleSignOut() {
     setUser({});

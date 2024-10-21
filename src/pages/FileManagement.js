@@ -1,25 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import '../App.css'; // Import the global styles
-import axios from 'axios';
 
 export const FileManagement = () => {
   const [files, setFiles] = useState([]);
   const [selectedFile, setSelectedFile] = useState(null);
+  const token = localStorage.getItem('token'); // Retrieve the JWT token
 
-  // Fetch files from API
-  async function fetchFiles() {
+  const fetchFiles = useCallback(async () => {
+    if (!token) {
+      console.error('No JWT token found. Please login again.');
+      return;
+    }
+  
     try {
-      const response = await fetch('https://localhost:44374/api/files');
+      const response = await fetch('https://localhost:44374/api/files/secure-files', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+  
       if (!response.ok) {
         throw new Error(`Error fetching files: ${response.status} ${response.statusText}`);
       }
-      const files = await response.json();
-      setFiles(files);  // Update the state with the fetched files
-      console.log('Fetched files:', files);
+  
+      const data = await response.json();
+      console.log('Fetched files:', data);
+  
+      // Check for the array within the `$values` key
+      if (Array.isArray(data.$values)) {
+        setFiles(data.$values);
+      } else {
+        console.warn('Unexpected data structure:', data);
+        setFiles([]);
+      }
     } catch (error) {
       console.error('Error fetching files:', error.message);
+      setFiles([]); // Reset to an empty array in case of error
     }
-  }
+  }, [token]);
+  
 
   // Handle file selection for upload
   const handleFileChange = (event) => {
@@ -37,8 +58,11 @@ export const FileManagement = () => {
     formData.append('file', selectedFile);
 
     try {
-      const response = await fetch('http://localhost:19269/api/files/upload', {
+      const response = await fetch('https://localhost:44374/api/files/upload', {
         method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`, // Include the JWT token
+        },
         body: formData,
       });
 
@@ -56,10 +80,13 @@ export const FileManagement = () => {
 
   // Handle file download
   const handleFileDownload = async (fileId, fileName) => {
-    console.log("Downloading file with ID:", fileId);  // Add this line to check the fileId
+    console.log("Downloading file with ID:", fileId);
     try {
-      const response = await fetch(`http://localhost:19269/api/files/download/${fileId}`, {
+      const response = await fetch(`https://localhost:44374/api/files/download/${fileId}`, {
         method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`, // Include the JWT token
+        },
       });
 
       if (response.ok) {
@@ -70,7 +97,7 @@ export const FileManagement = () => {
         link.setAttribute('download', fileName); // Set the file name for download
         document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);  // Clean up the link after download
+        document.body.removeChild(link);
       } else {
         console.error('File download failed:', response.statusText);
       }
@@ -84,8 +111,11 @@ export const FileManagement = () => {
     if (!window.confirm('Are you sure you want to delete this file?')) return;
 
     try {
-      const response = await fetch(`http://localhost:19269/api/files/delete/${fileId}`, {
+      const response = await fetch(`https://localhost:44374/api/files/delete/${fileId}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`, // Include the JWT token
+        },
       });
 
       if (response.ok) {
@@ -102,33 +132,33 @@ export const FileManagement = () => {
   // Fetch files when the component mounts
   useEffect(() => {
     fetchFiles();
-  }, []);
+  }, [fetchFiles]);
 
   return (
-    <div className="main-content">  {/* Using the same class from HomePage */}
+    <div className="main-content">
       <h2>File Management</h2>
 
       {/* File Upload Section */}
-      <div className="login-section"> {/* Reuse the layout class */}
+      <div className="login-section">
         <input type="file" onChange={handleFileChange} />
-        <button className="btn" onClick={handleFileUpload}>Upload File</button> {/* Use .btn */}
+        <button className="btn" onClick={handleFileUpload}>Upload File</button>
       </div>
 
       {/* List of Uploaded Files */}
       <h3>Uploaded Files</h3>
-      <ul className="user-info-section">  {/* Reuse .user-info-section for consistent style */}
+      <ul className="user-info-section">
         {files.length === 0 ? (
           <li>No files uploaded yet.</li>
         ) : (
-          files.map((file) => (
-            <li key={file.id}>
-              {file.fileName} <span>({(file.length / 1024).toFixed(2)} KB)</span>
-              <button className="btn" onClick={() => handleFileDownload(file.id, file.fileName)}>
+          files.map((file, index) => (
+            <li key={file.mongoFileId || file.id || index}>
+              {file.fileName} <span>({file.length ? (file.length / 1024).toFixed(2) : '0'} KB)</span>
+              <button className="btn" onClick={() => handleFileDownload(file.mongoFileId, file.fileName)}>
                 Download
               </button>
               <button
                 className="btn delete-btn"
-                onClick={() => handleFileDelete(file.id)}
+                onClick={() => handleFileDelete(file.mongoFileId)}
                 style={{ marginLeft: '10px' }}
               >
                 Delete
@@ -138,7 +168,7 @@ export const FileManagement = () => {
         )}
       </ul>
 
-      <footer className="footer">  {/* Reuse footer from HomePage */}
+      <footer className="footer">
         &copy; 2024 FileStorage. All rights reserved.
       </footer>
     </div>

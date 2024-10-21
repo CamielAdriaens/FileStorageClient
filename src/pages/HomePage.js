@@ -3,7 +3,7 @@ import { useGoogleAuth } from '../utils/useGoogleAuth';
 import '../App.css'; // Ensure this imports the CSS
 
 export const HomePage = () => {
-  const { user, backendAuth, handleSignOut } = useGoogleAuth(); // Use the hook
+  const { user, handleSignOut } = useGoogleAuth(); // Use the hook
 
   return (
     <div className="homepage"> {/* Apply the 'homepage' class */}
@@ -30,14 +30,6 @@ export const HomePage = () => {
           <section className="user-info-section">
             <h2>{user.name}</h2>
             <img className="profile-pic" src={user.picture} alt="Profile" />
-          </section>
-        )}
-
-        {backendAuth && (
-          <section className="backend-auth-info">
-            <p>Backend Auth Response: {backendAuth.Message}</p>
-            <p>UserId: {backendAuth.UserId}</p>
-            <p>Email: {backendAuth.Email}</p>
           </section>
         )}
       </main>
