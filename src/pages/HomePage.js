@@ -1,19 +1,15 @@
+// components/HomePage.js
 import React from 'react';
 import { useGoogleAuth } from '../utils/useGoogleAuth';
 import '../App.css'; // Ensure this imports the CSS
 
 export const HomePage = () => {
-  const { user, handleSignOut } = useGoogleAuth(); // Use the hook
+  const { user } = useGoogleAuth(); // Only access user; handleSignOut is no longer needed here
 
   return (
     <div className="homepage"> {/* Apply the 'homepage' class */}
       <header className="header">
         <div className="logo">Welcome!</div>
-        {Object.keys(user).length !== 0 && (
-          <button className="signout-btn" onClick={handleSignOut}>
-            Sign Out
-          </button>
-        )}
       </header>
 
       <main className="main-content">

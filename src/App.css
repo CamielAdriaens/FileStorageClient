@@ -6,11 +6,37 @@
   font-family: 'Arial', sans-serif;
 }
 
+/* Define CSS variables for light and dark themes */
+:root {
+  --background-color: #f4f4f9;
+  --text-color: #333;
+  --button-bg: #007bff;
+  --button-text: white;
+  --header-bg: linear-gradient(90deg, #007bff 0%, #00d4ff 100%);
+  --footer-bg: #007bff;
+  --navbar-bg: #007bff;
+  --hover-color: #0056b3;
+  --navbar-hover-color: #ffdd57;
+}
+
+.dark-mode {
+  --background-color: #1a1a1a;
+  --text-color: #ffffff;
+  --button-bg: #444;
+  --button-text: #ffffff;
+  --header-bg: linear-gradient(90deg, #333 0%, #555 100%);
+  --footer-bg: #333;
+  --navbar-bg: #333;
+  --hover-color: #666;
+  --navbar-hover-color: #ffa500;
+}
+
 body {
-  background-color: #f4f4f9;
-  color: #333;
+  background-color: var(--background-color);
+  color: var(--text-color);
   min-height: 100vh;
   line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 /* Utility Classes */
@@ -22,8 +48,8 @@ body {
 
 /* Button Styles */
 .btn {
-  background-color: #007bff;
-  color: white;
+  background-color: var(--button-bg);
+  color: var(--button-text);
   border: none;
   padding: 10px 20px;
   border-radius: 5px;
@@ -32,7 +58,7 @@ body {
 }
 
 .btn:hover {
-  background-color: #0056b3;
+  background-color: var(--hover-color);
 }
 
 /* Homepage Layout */
@@ -50,7 +76,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 20px;
-  background: linear-gradient(90deg, #007bff 0%, #00d4ff 100%);
+  background: var(--header-bg);
   color: white;
   font-size: 1.5rem;
 }
@@ -85,7 +111,7 @@ body {
 
 .welcome-section p {
   font-size: 1.2rem;
-  color: #666;
+  color: var(--text-color);
   text-align: center;
 }
 
@@ -98,7 +124,8 @@ body {
   flex-direction: column;
   align-items: center;
   margin-top: 20px;
-  background-color: #fff;
+  background-color: var(--background-color);
+  color: var(--text-color);
   padding: 20px;
   border-radius: 10px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
@@ -122,7 +149,7 @@ body {
 
 /* Footer */
 .footer {
-  background-color: #007bff;
+  background-color: var(--footer-bg);
   color: white;
   text-align: center;
   padding: 15px;
@@ -135,7 +162,7 @@ body {
   justify-content: space-between;
   align-items: center;
   padding: 15px 30px;
-  background-color: #007bff;
+  background-color: var(--navbar-bg);
   color: white;
 }
 
@@ -162,7 +189,7 @@ body {
 }
 
 .navbar-links a:hover {
-  color: #ffdd57;
+  color: var(--navbar-hover-color);
 }
 
 /* Responsive Design (Media Queries) */

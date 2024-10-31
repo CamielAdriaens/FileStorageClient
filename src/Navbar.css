@@ -1,50 +1,82 @@
 /* Navbar Styles */
 .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 30px;
-    background-color: #007bff;  /* Blue background */
-    color: white;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  background-color: var(--navbar-bg);  /* Uses CSS variable for background */
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.navbar-dark {
+  background-color: #333; /* Dark background for navbar when in dark mode */
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.navbar-links {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+}
+
+.navbar-links li {
+  display: inline;
+}
+
+.navbar-links a {
+  color: white;
+  text-decoration: none;
+  font-size: 1.1rem;
+  transition: color 0.3s ease;
+}
+
+.navbar-links a:hover {
+  color: var(--navbar-hover-color); /* Hover effect color */
+}
+/* Sign Out Button */
+.signout-btn {
+  background-color: #ff4757;
+  border: none;
+  padding: 8px 15px;
+  color: white;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-left: 20px;
+}
+
+.signout-btn:hover {
+  background-color: #ff6b81;
+}
+
+/* Dark Mode Toggle */
+.dark-mode-toggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: white;
+}
+
+.dark-mode-toggle input {
+  margin-right: 5px;
+}
+
+/* Responsive Navbar */
+@media (max-width: 768px) {
+  .navbar {
+    flex-direction: column;
+    text-align: center;
   }
-  
-  .navbar-brand {
-    font-size: 1.5rem;
-    font-weight: bold;
-  }
-  
+
   .navbar-links {
-    list-style: none;
-    display: flex;
-    gap: 20px;
+    flex-direction: column;
+    gap: 10px;
   }
   
-  .navbar-links li {
-    display: inline;
-  }
-  
-  .navbar-links a {
-    color: white;
-    text-decoration: none;
-    font-size: 1.1rem;
-    transition: color 0.3s ease;
-  }
-  
-  .navbar-links a:hover {
-    color: #ffdd57;  /* Hover effect color */
-  }
-  
-  /* Responsive Navbar */
-  @media (max-width: 768px) {
-    .navbar {
-      flex-direction: column;
-      text-align: center;
-    }
-  
-    .navbar-links {
-      flex-direction: column;
-      gap: 10px;
-    }
-  }
-  
+}
