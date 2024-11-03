@@ -1,0 +1,20 @@
+.search-filter {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .search-filter input,
+  .search-filter select {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    font-size: 1rem;
+  }
+  
+  .search-filter input:focus,
+  .search-filter select:focus {
+    border-color: #3f51b5;
+    outline: none;
+  }
+  

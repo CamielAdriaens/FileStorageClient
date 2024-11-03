@@ -1,12 +1,12 @@
-import './App.css';  // Global CSS file
-import { AppRoutes } from './AppRoutes';  // Import the AppRoutes component
+import React from 'react';
+import { AuthProvider } from './utils/AuthContext';
+import AppRoutes from './AppRoutes';
 
 function App() {
   return (
-    <div className="app">
-      {/* Navbar will be included in every page as part of App.js */}
+    <AuthProvider>
       <AppRoutes />
-    </div>
+    </AuthProvider>
   );
 }
 

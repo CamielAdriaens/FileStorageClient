@@ -1,50 +1,104 @@
-/* Navbar Styles */
 .navbar {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 15px 30px;
-    background-color: #007bff;  /* Blue background */
-    color: white;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between; /* Keeps left and right sections apart */
+  align-items: center;
+  padding: 15px 30px;
+  background-color: var(--primary-color);
+  color: var(--text-light);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Left section for brand and links */
+.navbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-brand {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-right: 20px; /* Adds space between brand and links */
+}
+
+.navbar-links {
+  display: flex;
+  gap: 15px;
+  list-style: none;
+}
+
+.navbar-links a {
+  color: var(--text-light);
+  text-decoration: none;
+  font-size: 1rem;
+  position: relative;
+}
+
+.navbar-links a:hover {
+  color: var(--accent-color);
+}
+
+.navbar-links a::after {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 2px;
+  background: var(--accent-color);
+  left: 0;
+  bottom: -4px;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.3s ease;
+}
+
+.navbar-links a:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* Right section for sign-out and dark mode toggle */
+.navbar-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.signout-btn, .dark-mode-toggle {
+  background: transparent;
+  border: none;
+  color: var(--text-light);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 5px 10px;
+}
+
+body.dark-mode .dark-mode-toggle {
+  color: var(--accent-color);
+}
+
+/* Responsive Media Queries */
+@media (max-width: 768px) {
+  .navbar {
+    padding: 10px 20px;
   }
-  
-  .navbar-brand {
-    font-size: 1.5rem;
-    font-weight: bold;
-  }
-  
   .navbar-links {
-    list-style: none;
-    display: flex;
-    gap: 20px;
+    gap: 10px;
   }
-  
-  .navbar-links li {
-    display: inline;
-  }
-  
   .navbar-links a {
-    color: white;
-    text-decoration: none;
-    font-size: 1.1rem;
-    transition: color 0.3s ease;
+    font-size: 0.9rem;
   }
-  
-  .navbar-links a:hover {
-    color: #ffdd57;  /* Hover effect color */
+}
+
+@media (max-width: 480px) {
+  .navbar {
+    flex-direction: column;
   }
-  
-  /* Responsive Navbar */
-  @media (max-width: 768px) {
-    .navbar {
-      flex-direction: column;
-      text-align: center;
-    }
-  
-    .navbar-links {
-      flex-direction: column;
-      gap: 10px;
-    }
+  .navbar-left,
+  .navbar-right {
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
   }
-  
+  .navbar-brand {
+    margin-bottom: 10px;
+  }
+}
