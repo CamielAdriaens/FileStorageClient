@@ -1,4 +1,3 @@
-// src/pages/FileManagement.js
 
 import React, { useCallback, useState, useEffect } from 'react';
 import { useAuth } from '../utils/AuthContext';
@@ -12,9 +11,7 @@ export const FileManagement = () => {
   const [files, setFiles] = useState([]);
   const [filteredFiles, setFilteredFiles] = useState([]);
   const [sortOrder, setSortOrder] = useState('name');
-  const [previewFile, setPreviewFile] = useState(null);
-  const [folders, setFolders] = useState({}); // To store files by folder
-  const [selectedFolder, setSelectedFolder] = useState('');
+  const [previewFile, setPreviewFile] = useState(null); // State to hold file for preview
   const [activities, setActivities] = useState([]);
   const token = localStorage.getItem('token');
 
@@ -64,21 +61,19 @@ export const FileManagement = () => {
     }
   }, [token]);
 
-  // Log activity to Activity Feed
   const addActivity = (message) => {
     const newActivity = {
       message,
       timestamp: new Date().toLocaleString(),
     };
-    
+
     setActivities((prevActivities) => {
       const updatedActivities = [newActivity, ...prevActivities];
-      localStorage.setItem('activities', JSON.stringify(updatedActivities)); // Save to localStorage
+      localStorage.setItem('activities', JSON.stringify(updatedActivities));
       return updatedActivities;
     });
   };
 
-  // Handle file selection and immediate upload
   const handleFileChange = async (event) => {
     const fileToUpload = event.target.files[0];
     if (!fileToUpload) {
@@ -110,7 +105,6 @@ export const FileManagement = () => {
     }
   };
 
-  // Download file function
   const handleFileDownload = async (fileId, fileName) => {
     try {
       const response = await fetch(`https://localhost:44374/api/files/download/${fileId}`, {
@@ -138,7 +132,6 @@ export const FileManagement = () => {
     }
   };
 
-  // Delete file function
   const handleFileDelete = async (fileId, fileName) => {
     if (!window.confirm('Are you sure you want to delete this file?')) return;
 
@@ -160,31 +153,6 @@ export const FileManagement = () => {
     } catch (error) {
       console.error('Error deleting file:', error);
     }
-  };
-
-  // Move file to folder
-  const moveToFolder = (file, folderName) => {
-    if (!folderName) {
-      alert('Please select or create a folder.');
-      return;
-    }
-    
-    setFolders((prevFolders) => ({
-      ...prevFolders,
-      [folderName]: [...(prevFolders[folderName] || []), file],
-    }));
-    setFiles(files.filter((f) => f.mongoFileId !== file.mongoFileId));
-    addActivity(`Moved file ${file.fileName} to folder "${folderName}"`);
-  };
-
-  // Open preview for an existing file
-  const openPreview = (file) => {
-    setPreviewFile(file);
-  };
-
-  // Close preview modal
-  const closePreview = () => {
-    setPreviewFile(null);
   };
 
   // Search, filter, and sort functionalities
@@ -241,25 +209,10 @@ export const FileManagement = () => {
             <option value="size">Sort by Size</option>
           </select>
 
-          {/* File Upload Section */}
-          <div className="login-section">
+          <div className="file-upload">
             <input type="file" onChange={handleFileChange} />
           </div>
 
-          {/* Folder Management */}
-          <div className="folder-management">
-            <input
-              type="text"
-              placeholder="Enter folder name"
-              value={selectedFolder}
-              onChange={(e) => setSelectedFolder(e.target.value)}
-            />
-            <button onClick={() => setFolders((prevFolders) => ({ ...prevFolders, [selectedFolder]: [] }))}>
-              Create Folder
-            </button>
-          </div>
-
-          {/* List of Uploaded Files */}
           <div className="files-section">
             {filteredFiles.length > 0 ? (
               filteredFiles.map((file, index) => (
@@ -269,7 +222,7 @@ export const FileManagement = () => {
                     <span className="file-size">({file.length ? (file.length / 1024).toFixed(2) : '0'} KB)</span>
                   </div>
                   <div className="file-buttons">
-                    <button className="button" onClick={() => openPreview(file)}>
+                    <button className="button" onClick={() => setPreviewFile(file)}>
                       Preview
                     </button>
                     <button className="button" onClick={() => handleFileDownload(file.mongoFileId, file.fileName)}>
@@ -277,9 +230,6 @@ export const FileManagement = () => {
                     </button>
                     <button className="button delete-btn" onClick={() => handleFileDelete(file.mongoFileId, file.fileName)}>
                       Delete
-                    </button>
-                    <button className="button" onClick={() => moveToFolder(file, selectedFolder)}>
-                      Move to Folder
                     </button>
                   </div>
                 </div>
@@ -290,7 +240,7 @@ export const FileManagement = () => {
           </div>
 
           {/* File Preview Modal */}
-          {previewFile && <FilePreview file={previewFile} onClose={closePreview} />}
+          {previewFile && <FilePreview file={previewFile} onClose={() => setPreviewFile(null)} />}
         </>
       ) : (
         <p>Please log in to manage files.</p>

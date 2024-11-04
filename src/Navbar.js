@@ -28,24 +28,14 @@ const Navbar = () => {
     }
   };
 
-  console.log("isSignedIn:", isSignedIn); // Add this to verify if isSignedIn is true
-
   return (
     <nav className="navbar">
       <div className="navbar-left">
         <div className="navbar-brand">FileStorage</div>
         <ul className="navbar-links">
-          <li>
-            <Link to="/">Home</Link>
-          </li>
-          <li>
-            <Link to="/file">File Management</Link>
-          </li>
-          {isSignedIn && (
-            <li>
-              <Link to="/activity">Activity Feed</Link>
-            </li>
-          )}
+          <li><Link to="/">Home</Link></li>
+          {isSignedIn && <li><Link to="/file">File Management</Link></li>}
+          {isSignedIn && <li><Link to="/activity">Activity Feed</Link></li>}
         </ul>
       </div>
       <div className="navbar-right">
