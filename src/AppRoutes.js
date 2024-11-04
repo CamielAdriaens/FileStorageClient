@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { HomePage } from './pages/HomePage';
+<<<<<<< Updated upstream
 import { FileUpload } from './pages/FileUpload';
 import { jwtDecode } from 'jwt-decode'; // Correct import for jwt-decode
 import { useEffect } from 'react';
@@ -32,6 +33,40 @@ const isAuthenticated = () => {
         // No token found in localStorage
         return false;
     }
+=======
+import { FileManagement } from './pages/FileManagement';
+import ActivityFeedPage from './pages/ActivityFeedPage';
+import Navbar from './Navbar';
+import ProtectedRoute from './utils/ProtectedRoute';
+
+const AppRoutes = () => {
+  return (
+    <BrowserRouter>
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        
+        <Route
+          path="/file"
+          element={
+            <ProtectedRoute>
+              <FileManagement />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/activity"
+          element={
+            <ProtectedRoute>
+              <ActivityFeedPage />
+            </ProtectedRoute>
+          }
+        />
+      </Routes>
+    </BrowserRouter>
+  );
+>>>>>>> Stashed changes
 };
 
 
