@@ -1,7 +1,7 @@
 /* global google */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode';
+import { jwtDecode}  from 'jwt-decode'; // Remove `jwtDecode` from destructuring if needed
 
 const AuthContext = createContext();
 
@@ -9,17 +9,32 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
-  // Handle login callback from Google
-  const handleCallbackResponse = (response) => {
-    const token = response.credential;
+  // Send Google token to the back-end for validation and to get the server-generated JWT
+  const authenticateWithBackend = async (token) => {
     try {
-      const userObject = jwtDecode(token);
-      setUser(userObject);
-      localStorage.setItem('token', token);
-      setIsSignedIn(true); // Set signed-in state to true
+      const response = await fetch('http://localhost:5000/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Credential: token })
+      });
+      
+      if (!response.ok) throw new Error('Failed to authenticate with the backend');
+
+      const data = await response.json();
+      
+      // Save the server's JWT token
+      localStorage.setItem('token', data.jwt);
+      setUser(data); // Set the user data (e.g., email, name)
+      setIsSignedIn(true);
     } catch (error) {
-      console.error("Error decoding token:", error);
+      console.error("Backend authentication failed:", error);
     }
+  };
+
+  // Handle Google Sign-In callback
+  const handleCallbackResponse = (response) => {
+    const googleToken = response.credential;
+    authenticateWithBackend(googleToken); // Authenticate with back-end
   };
 
   // Logout function with redirect to homepage
@@ -27,9 +42,7 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setIsSignedIn(false);
     localStorage.removeItem('token');
-    
-    // Redirect to the homepage and reload
-    window.location.href = '/';
+    window.location.href = '/'; // Redirect to the homepage
   };
 
   // Initialize Google sign-in on component mount
@@ -56,7 +69,6 @@ export const AuthProvider = ({ children }) => {
         { theme: "outline", size: "large" }
       );
 
-      // Show the One Tap prompt
       google.accounts.id.prompt();
     }
   }, []); // Run only once on initial load

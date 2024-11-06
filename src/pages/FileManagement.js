@@ -23,7 +23,7 @@ export const FileManagement = () => {
     }
 
     try {
-      const response = await fetch('https://localhost:44374/api/files/secure-files', {
+      const response = await fetch('https://localhost:44331/api/files/secure-files', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -49,7 +49,7 @@ export const FileManagement = () => {
         } else {
           type = 'doc';
         }
-        return { ...file, type, url: `https://localhost:44374/api/files/download/${file.mongoFileId}` };
+        return { ...file, type, url: `https://localhost:44331/api/files/download/${file.mongoFileId}` };
       });
 
       setFiles(filesWithTypes);
@@ -85,7 +85,7 @@ export const FileManagement = () => {
     formData.append('file', fileToUpload);
 
     try {
-      const response = await fetch('https://localhost:44374/api/files/upload', {
+      const response = await fetch('https://localhost:44331/api/files/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -107,7 +107,7 @@ export const FileManagement = () => {
 
   const handleFileDownload = async (fileId, fileName) => {
     try {
-      const response = await fetch(`https://localhost:44374/api/files/download/${fileId}`, {
+      const response = await fetch(`https://localhost:44331/api/files/download/${fileId}`, {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -136,7 +136,7 @@ export const FileManagement = () => {
     if (!window.confirm('Are you sure you want to delete this file?')) return;
 
     try {
-      const response = await fetch(`https://localhost:44374/api/files/delete/${fileId}`, {
+      const response = await fetch(`https://localhost:44331/api/files/delete/${fileId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
