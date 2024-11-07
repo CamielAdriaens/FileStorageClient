@@ -15,7 +15,7 @@ const ActivityFeedPage = () => {
 
   return (
     <div className="activity-feed-page">
-      <h2>Activity Feed</h2>
+      <h2>Recent Activity</h2>
       <ActivityFeed activities={activities} />
     </div>
   );
