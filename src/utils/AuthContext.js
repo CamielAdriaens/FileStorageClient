@@ -9,17 +9,37 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
+  // Send Google token to the back-end for validation and to get the server-generated JWT
+  const authenticateWithBackend = async (token) => {
+    try {
+      const response = await fetch('https://localhost:44332/api/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ Credential: token }),
+        credentials: 'include' // Include credentials in the request
+      });
+      
+      if (!response.ok) throw new Error('Failed to authenticate with the backend');
+
+      const data = await response.json();
+      
+      // Save the server's JWT token
+      localStorage.setItem('token', data.jwt);
+      setUser(data); // Set the user data (e.g., email, name)
+      setIsSignedIn(true);
+
+      console.log("Successfully authenticated with the backend!");
+      console.log("User Data:", data);
+      console.log("JWT Token:", data.jwt);
+    } catch (error) {
+      console.error("Backend authentication failed:", error);
+    }
+  };
+
   // Handle login callback from Google
   const handleCallbackResponse = (response) => {
     const token = response.credential;
-    try {
-      const userObject = jwtDecode(token);
-      setUser(userObject);
-      localStorage.setItem('token', token);
-      setIsSignedIn(true); // Set signed-in state to true
-    } catch (error) {
-      console.error("Error decoding token:", error);
-    }
+    authenticateWithBackend(token); // Authenticate with backend using Google token
   };
 
   // Logout function with redirect to homepage

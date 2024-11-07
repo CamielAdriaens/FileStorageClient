@@ -1,4 +1,3 @@
-
 import React, { useCallback, useState, useEffect } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import '../App.css';
@@ -11,8 +10,9 @@ export const FileManagement = () => {
   const [files, setFiles] = useState([]);
   const [filteredFiles, setFilteredFiles] = useState([]);
   const [sortOrder, setSortOrder] = useState('name');
-  const [previewFile, setPreviewFile] = useState(null); // State to hold file for preview
+  const [previewFile, setPreviewFile] = useState(null);
   const [activities, setActivities] = useState([]);
+
   const token = localStorage.getItem('token');
 
   // Fetch files from the server
@@ -23,7 +23,7 @@ export const FileManagement = () => {
     }
 
     try {
-      const response = await fetch('https://localhost:44374/api/files/secure-files', {
+      const response = await fetch('https://localhost:44332/api/files/secure-files', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -38,18 +38,14 @@ export const FileManagement = () => {
       const data = await response.json();
       const fetchedFiles = Array.isArray(data.$values) ? data.$values : [];
 
-      // Map file types for filtering
       const filesWithTypes = fetchedFiles.map(file => {
         const extension = file.fileName.split('.').pop().toLowerCase();
-        let type;
-        if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
-          type = 'image';
-        } else if (extension === 'pdf') {
-          type = 'pdf';
-        } else {
-          type = 'doc';
-        }
-        return { ...file, type, url: `https://localhost:44374/api/files/download/${file.mongoFileId}` };
+        const type = ['jpg', 'jpeg', 'png', 'gif'].includes(extension) ? 'image' : extension === 'pdf' ? 'pdf' : 'doc';
+        return {
+          ...file,
+          type,
+          url: `https://localhost:44332/api/files/download/${file.mongoFileId}`,
+        };
       });
 
       setFiles(filesWithTypes);
@@ -61,19 +57,17 @@ export const FileManagement = () => {
     }
   }, [token]);
 
+  // Add activity to log and localStorage
   const addActivity = (message) => {
-    const newActivity = {
-      message,
-      timestamp: new Date().toLocaleString(),
-    };
-
-    setActivities((prevActivities) => {
-      const updatedActivities = [newActivity, ...prevActivities];
-      localStorage.setItem('activities', JSON.stringify(updatedActivities));
-      return updatedActivities;
+    const newActivity = { message, timestamp: new Date().toLocaleString() };
+    setActivities((prev) => {
+      const updated = [newActivity, ...prev];
+      localStorage.setItem('activities', JSON.stringify(updated));
+      return updated;
     });
   };
 
+  // Handle file upload
   const handleFileChange = async (event) => {
     const fileToUpload = event.target.files[0];
     if (!fileToUpload) {
@@ -85,33 +79,30 @@ export const FileManagement = () => {
     formData.append('file', fileToUpload);
 
     try {
-      const response = await fetch('https://localhost:44374/api/files/upload', {
+      const response = await fetch('https://localhost:44332/api/files/upload', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
         body: formData,
       });
 
       if (response.ok) {
         alert('File uploaded successfully.');
-        fetchFiles(); // Refresh the list of files after uploading
+        fetchFiles(); // Refresh the file list
         addActivity(`Uploaded file: ${fileToUpload.name}`);
       } else {
-        console.error('File upload failed:', response.statusText);
+        throw new Error(`File upload failed: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error uploading file:', error);
     }
   };
 
+  // Handle file download
   const handleFileDownload = async (fileId, fileName) => {
     try {
-      const response = await fetch(`https://localhost:44374/api/files/download/${fileId}`, {
+      const response = await fetch(`https://localhost:44332/api/files/download/${fileId}`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       if (response.ok) {
@@ -125,30 +116,29 @@ export const FileManagement = () => {
         document.body.removeChild(link);
         addActivity(`Downloaded file: ${fileName}`);
       } else {
-        console.error('File download failed:', response.statusText);
+        throw new Error(`File download failed: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error downloading file:', error);
     }
   };
 
+  // Handle file deletion
   const handleFileDelete = async (fileId, fileName) => {
     if (!window.confirm('Are you sure you want to delete this file?')) return;
 
     try {
-      const response = await fetch(`https://localhost:44374/api/files/delete/${fileId}`, {
+      const response = await fetch(`https://localhost:44332/api/files/delete/${fileId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       });
 
       if (response.ok) {
         alert('File deleted successfully.');
-        fetchFiles(); // Refresh the list of files after deleting
+        fetchFiles(); // Refresh the file list
         addActivity(`Deleted file: ${fileName}`);
       } else {
-        console.error('File deletion failed:', response.statusText);
+        throw new Error(`File deletion failed: ${response.statusText}`);
       }
     } catch (error) {
       console.error('Error deleting file:', error);
@@ -157,49 +147,33 @@ export const FileManagement = () => {
 
   // Search, filter, and sort functionalities
   const handleSearch = (searchTerm) => {
-    const filtered = files.filter(file =>
-      file.fileName.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filtered = files.filter(file => file.fileName.toLowerCase().includes(searchTerm.toLowerCase()));
     setFilteredFiles(filtered);
   };
 
   const handleFilter = (fileType) => {
-    const filtered = fileType
-      ? files.filter(file => file.type === fileType)
-      : files;
-    setFilteredFiles(filtered);
+    setFilteredFiles(fileType ? files.filter(file => file.type === fileType) : files);
   };
 
   const handleSortChange = (e) => {
-    setSortOrder(e.target.value);
-    sortFiles(e.target.value);
-  };
-
-  const sortFiles = (criteria) => {
-    const sortedFiles = [...filteredFiles].sort((a, b) => {
-      if (criteria === 'name') {
-        return a.fileName.localeCompare(b.fileName);
-      } else if (criteria === 'date') {
-        return new Date(b.uploadDate) - new Date(a.uploadDate);
-      } else if (criteria === 'size') {
-        return b.size - a.size;
-      }
+    const criteria = e.target.value;
+    setSortOrder(criteria);
+    const sorted = [...filteredFiles].sort((a, b) => {
+      if (criteria === 'name') return a.fileName.localeCompare(b.fileName);
+      if (criteria === 'date') return new Date(b.uploadDate) - new Date(a.uploadDate);
+      if (criteria === 'size') return b.size - a.size;
       return 0;
     });
-    setFilteredFiles(sortedFiles);
+    setFilteredFiles(sorted);
   };
 
-  // Fetch files on component mount
   useEffect(() => {
-    if (isSignedIn) {
-      fetchFiles();
-    }
+    if (isSignedIn) fetchFiles();
   }, [fetchFiles, isSignedIn]);
 
   return (
     <div className="main-content fade-in">
       <h2>File Management</h2>
-
       {isSignedIn ? (
         <>
           <SearchFilter onSearch={handleSearch} onFilter={handleFilter} />
@@ -215,8 +189,8 @@ export const FileManagement = () => {
 
           <div className="files-section">
             {filteredFiles.length > 0 ? (
-              filteredFiles.map((file, index) => (
-                <div key={file.mongoFileId || file.id || index} className="file-card">
+              filteredFiles.map((file) => (
+                <div key={file.mongoFileId} className="file-card">
                   <div className="file-info">
                     <span className="file-name">{file.fileName}</span>
                     <span className="file-size">({file.length ? (file.length / 1024).toFixed(2) : '0'} KB)</span>
@@ -239,16 +213,12 @@ export const FileManagement = () => {
             )}
           </div>
 
-          {/* File Preview Modal */}
           {previewFile && <FilePreview file={previewFile} onClose={() => setPreviewFile(null)} />}
         </>
       ) : (
         <p>Please log in to manage files.</p>
       )}
-
-      <footer className="footer">
-        &copy; 2024 FileStorage. All rights reserved.
-      </footer>
+      <footer className="footer">&copy; 2024 FileStorage. All rights reserved.</footer>
     </div>
   );
 };
