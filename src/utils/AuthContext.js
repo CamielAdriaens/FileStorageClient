@@ -9,63 +9,49 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
 
-  // Send Google token to the back-end for validation and to get the server-generated JWT
+  // Send Google token to backend for validation and JWT generation
   const authenticateWithBackend = async (token) => {
     try {
       const response = await fetch('https://localhost:44332/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Credential: token }),
-        credentials: 'include' // Include credentials in the request
+        body: JSON.stringify({ Credential: token })
       });
-      
+
       if (!response.ok) throw new Error('Failed to authenticate with the backend');
 
       const data = await response.json();
-      
-      // Save the server's JWT token
-      localStorage.setItem('token', data.jwt);
-      setUser(data); // Set the user data (e.g., email, name)
-      setIsSignedIn(true);
 
-      console.log("Successfully authenticated with the backend!");
-      console.log("User Data:", data);
-      console.log("JWT Token:", data.jwt);
+      if (data.jwt) {
+        localStorage.setItem('token', data.jwt);
+        setUser(data);
+        setIsSignedIn(true);
+        console.log("Successfully authenticated with backend!", data);
+      } else {
+        throw new Error('JWT token missing in response');
+      }
     } catch (error) {
       console.error("Backend authentication failed:", error);
     }
   };
 
-  // Handle login callback from Google
   const handleCallbackResponse = (response) => {
     const token = response.credential;
-    authenticateWithBackend(token); // Authenticate with backend using Google token
+    authenticateWithBackend(token); // Send Google token to backend
   };
 
-  // Logout function with redirect to homepage
   const handleSignOut = () => {
     setUser(null);
     setIsSignedIn(false);
     localStorage.removeItem('token');
-    
-    // Redirect to the homepage and reload
     window.location.href = '/';
   };
 
-  // Initialize Google sign-in on component mount
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      try {
-        const userObject = jwtDecode(token);
-        setUser(userObject);
-        setIsSignedIn(true);
-      } catch (error) {
-        console.error("Token invalid or expired", error);
-        localStorage.removeItem('token');
-      }
+      setIsSignedIn(true);
     } else {
-      // Initialize Google Sign-In if not logged in
       google.accounts.id.initialize({
         client_id: "911031744599-l50od06i5t89bmdl4amjjhdvacsdonm7.apps.googleusercontent.com",
         callback: handleCallbackResponse,
@@ -76,10 +62,9 @@ export const AuthProvider = ({ children }) => {
         { theme: "outline", size: "large" }
       );
 
-      // Show the One Tap prompt
       google.accounts.id.prompt();
     }
-  }, []); // Run only once on initial load
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, isSignedIn, handleSignOut }}>

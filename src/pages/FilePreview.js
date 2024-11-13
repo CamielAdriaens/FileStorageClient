@@ -8,7 +8,7 @@ const FilePreview = ({ file, onClose }) => {
   useEffect(() => {
     const fetchFile = async () => {
       try {
-        const response = await fetch(`https://localhost:44374/api/files/download/${file.mongoFileId}`, {
+        const response = await fetch(`https://localhost:44332/api/files/download/${file.mongoFileId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -53,7 +53,7 @@ const FilePreview = ({ file, onClose }) => {
 
         {isPdf && (
           <iframe
-            src={`https://localhost:44374/api/files/download/${file.mongoFileId}`}
+            src={`https://localhost:44332/api/files/download/${file.mongoFileId}`}
             title={file.fileName}
             className="preview-pdf"
           />

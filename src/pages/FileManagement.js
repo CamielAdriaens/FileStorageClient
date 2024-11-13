@@ -1,8 +1,10 @@
+
 import React, { useCallback, useState, useEffect } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import '../App.css';
 import './FileManagement.css';
 import SearchFilter from './SearchFilter';
+
 import FilePreview from './FilePreview';
 
 export const FileManagement = () => {
@@ -15,13 +17,13 @@ export const FileManagement = () => {
 
   const token = localStorage.getItem('token');
 
-  // Fetch files from the server
+  // Fetch files from server
   const fetchFiles = useCallback(async () => {
     if (!token) {
       console.error('No JWT token found. Please log in again.');
       return;
     }
-
+  
     try {
       const response = await fetch('https://localhost:44332/api/files/secure-files', {
         method: 'GET',
@@ -30,14 +32,16 @@ export const FileManagement = () => {
           'Content-Type': 'application/json',
         },
       });
-
+  
       if (!response.ok) {
         throw new Error(`Error fetching files: ${response.status} ${response.statusText}`);
       }
-
+  
       const data = await response.json();
-      const fetchedFiles = Array.isArray(data.$values) ? data.$values : [];
-
+      console.log("Fetched Data:", data);
+  
+      const fetchedFiles = Array.isArray(data.$values) ? data.$values : data;
+  
       const filesWithTypes = fetchedFiles.map(file => {
         const extension = file.fileName.split('.').pop().toLowerCase();
         const type = ['jpg', 'jpeg', 'png', 'gif'].includes(extension) ? 'image' : extension === 'pdf' ? 'pdf' : 'doc';
@@ -47,7 +51,7 @@ export const FileManagement = () => {
           url: `https://localhost:44332/api/files/download/${file.mongoFileId}`,
         };
       });
-
+  
       setFiles(filesWithTypes);
       setFilteredFiles(filesWithTypes);
     } catch (error) {
@@ -56,8 +60,8 @@ export const FileManagement = () => {
       setFilteredFiles([]);
     }
   }, [token]);
-
-  // Add activity to log and localStorage
+  
+  // Log activity to localStorage
   const addActivity = (message) => {
     const newActivity = { message, timestamp: new Date().toLocaleString() };
     setActivities((prev) => {
@@ -87,7 +91,7 @@ export const FileManagement = () => {
 
       if (response.ok) {
         alert('File uploaded successfully.');
-        fetchFiles(); // Refresh the file list
+        fetchFiles(); // Refresh file list
         addActivity(`Uploaded file: ${fileToUpload.name}`);
       } else {
         throw new Error(`File upload failed: ${response.statusText}`);
@@ -135,7 +139,7 @@ export const FileManagement = () => {
 
       if (response.ok) {
         alert('File deleted successfully.');
-        fetchFiles(); // Refresh the file list
+        fetchFiles(); // Refresh file list
         addActivity(`Deleted file: ${fileName}`);
       } else {
         throw new Error(`File deletion failed: ${response.statusText}`);
