@@ -1,6 +1,7 @@
 /* global google */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
@@ -8,8 +9,9 @@ const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const navigate = useNavigate();
 
-  // Send Google token to backend for validation and JWT generation
+  // Function to handle Google token and authenticate with backend
   const authenticateWithBackend = async (token) => {
     try {
       const response = await fetch('https://localhost:44332/api/auth/google', {
@@ -24,9 +26,10 @@ export const AuthProvider = ({ children }) => {
 
       if (data.jwt) {
         localStorage.setItem('token', data.jwt);
-        setUser(data);
+        const decodedUser = jwtDecode(data.jwt);
+        setUser(decodedUser);
         setIsSignedIn(true);
-        console.log("Successfully authenticated with backend!", data);
+        console.log("Authenticated with backend:", decodedUser);
       } else {
         throw new Error('JWT token missing in response');
       }
@@ -37,21 +40,31 @@ export const AuthProvider = ({ children }) => {
 
   const handleCallbackResponse = (response) => {
     const token = response.credential;
-    authenticateWithBackend(token); // Send Google token to backend
+    authenticateWithBackend(token); 
   };
 
   const handleSignOut = () => {
     setUser(null);
     setIsSignedIn(false);
     localStorage.removeItem('token');
-    window.location.href = '/';
+    navigate('/');
+    window.location.reload();
   };
 
+  // Load user info from token on initial load
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      setIsSignedIn(true);
+      try {
+        const decodedUser = jwtDecode(token);
+        setUser(decodedUser);
+        setIsSignedIn(true);
+      } catch (error) {
+        console.error("Failed to decode token:", error);
+        localStorage.removeItem('token'); // Clear invalid token
+      }
     } else {
+      // Initialize Google sign-in if not signed in
       google.accounts.id.initialize({
         client_id: "911031744599-l50od06i5t89bmdl4amjjhdvacsdonm7.apps.googleusercontent.com",
         callback: handleCallbackResponse,
@@ -64,7 +77,7 @@ export const AuthProvider = ({ children }) => {
 
       google.accounts.id.prompt();
     }
-  }, []);
+  }, []); // Empty dependency array to run only on mount
 
   return (
     <AuthContext.Provider value={{ user, isSignedIn, handleSignOut }}>
