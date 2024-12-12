@@ -1,19 +1,19 @@
-
 import React, { useCallback, useState, useEffect } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import '../App.css';
 import './FileManagement.css';
 import SearchFilter from './SearchFilter';
-
 import FilePreview from './FilePreview';
 
 export const FileManagement = () => {
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, userId } = useAuth(); // Assumes `userId` is available from AuthContext
   const [files, setFiles] = useState([]);
   const [filteredFiles, setFilteredFiles] = useState([]);
   const [sortOrder, setSortOrder] = useState('name');
   const [previewFile, setPreviewFile] = useState(null);
   const [activities, setActivities] = useState([]);
+  const [recipientUserId, setRecipientUserId] = useState(''); // User ID for sharing
+  const [errorMessage, setErrorMessage] = useState('');
 
   const token = localStorage.getItem('token');
 
@@ -23,7 +23,7 @@ export const FileManagement = () => {
       console.error('No JWT token found. Please log in again.');
       return;
     }
-  
+
     try {
       const response = await fetch('https://localhost:44332/api/files/secure-files', {
         method: 'GET',
@@ -32,16 +32,16 @@ export const FileManagement = () => {
           'Content-Type': 'application/json',
         },
       });
-  
+
       if (!response.ok) {
         throw new Error(`Error fetching files: ${response.status} ${response.statusText}`);
       }
-  
+
       const data = await response.json();
       console.log("Fetched Data:", data);
-  
+
       const fetchedFiles = Array.isArray(data.$values) ? data.$values : data;
-  
+
       const filesWithTypes = fetchedFiles.map(file => {
         const extension = file.fileName.split('.').pop().toLowerCase();
         const type = ['jpg', 'jpeg', 'png', 'gif'].includes(extension) ? 'image' : extension === 'pdf' ? 'pdf' : 'doc';
@@ -51,16 +51,17 @@ export const FileManagement = () => {
           url: `https://localhost:44332/api/files/download/${file.mongoFileId}`,
         };
       });
-  
+
       setFiles(filesWithTypes);
       setFilteredFiles(filesWithTypes);
     } catch (error) {
       console.error('Error fetching files:', error.message);
+      setErrorMessage('Error fetching files. Please try again later.');
       setFiles([]);
       setFilteredFiles([]);
     }
   }, [token]);
-  
+
   // Log activity to localStorage
   const addActivity = (message) => {
     const newActivity = { message, timestamp: new Date().toLocaleString() };
@@ -98,6 +99,7 @@ export const FileManagement = () => {
       }
     } catch (error) {
       console.error('Error uploading file:', error);
+      alert('Error uploading file. Please try again.');
     }
   };
 
@@ -124,6 +126,7 @@ export const FileManagement = () => {
       }
     } catch (error) {
       console.error('Error downloading file:', error);
+      alert('Error downloading file. Please try again.');
     }
   };
 
@@ -146,6 +149,50 @@ export const FileManagement = () => {
       }
     } catch (error) {
       console.error('Error deleting file:', error);
+      alert('Error deleting file. Please try again.');
+    }
+  };
+
+  // Share file
+  const handleShareFile = async (fileId) => {
+    if (!recipientUserId) {
+      setErrorMessage('Please select a recipient.');
+      return;
+    }
+
+    const fileToShare = files.find(file => file.mongoFileId === fileId);
+    if (!fileToShare) {
+      setErrorMessage('File not found.');
+      return;
+    }
+
+    const shareData = {
+      SenderUserId: userId,
+      RecipientUserId: recipientUserId,
+      MongoFileId: fileToShare.mongoFileId,
+      FileName: fileToShare.fileName,
+      CreatedAt: new Date().toISOString(),
+    };
+
+    try {
+      const response = await fetch('https://localhost:44332/api/files/share', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(shareData),
+      });
+
+      if (response.ok) {
+        alert('File shared successfully!');
+        addActivity(`Shared file: ${fileToShare.fileName}`);
+      } else {
+        throw new Error('Error sharing file');
+      }
+    } catch (error) {
+      console.error('Error sharing file:', error);
+      setErrorMessage('Error sharing file. Please try again.');
     }
   };
 
@@ -192,6 +239,7 @@ export const FileManagement = () => {
           </div>
 
           <div className="files-section">
+            {errorMessage && <p className="error-message">{errorMessage}</p>}
             {filteredFiles.length > 0 ? (
               filteredFiles.map((file) => (
                 <div key={file.mongoFileId} className="file-card">
@@ -205,6 +253,9 @@ export const FileManagement = () => {
                     </button>
                     <button className="button" onClick={() => handleFileDownload(file.mongoFileId, file.fileName)}>
                       Download
+                    </button>
+                    <button className="button" onClick={() => handleShareFile(file.mongoFileId)}>
+                      Share
                     </button>
                     <button className="button delete-btn" onClick={() => handleFileDelete(file.mongoFileId, file.fileName)}>
                       Delete
