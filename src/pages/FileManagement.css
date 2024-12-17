@@ -309,4 +309,38 @@ body.dark-mode .footer {
   .footer {
     font-size: 0.8rem;
   }
+  .share-section {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  
+  .share-section input {
+    flex: 1;
+    padding: 5px;
+  }
+  
+  .pending-share-card {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px;
+    margin: 5px 0;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+  }
+  
+  .pending-share-card span {
+    flex: 1;
+  }
+  
+  .accept-btn {
+    background-color: #4CAF50;
+    color: white;
+  }
+  
+  .refuse-btn {
+    background-color: #f44336;
+    color: white;
+  }
+  
 }

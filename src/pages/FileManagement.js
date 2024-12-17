@@ -12,8 +12,9 @@ export const FileManagement = () => {
   const [sortOrder, setSortOrder] = useState('name');
   const [previewFile, setPreviewFile] = useState(null);
   const [activities, setActivities] = useState([]);
-  const [recipientUserId, setRecipientUserId] = useState(''); // User ID for sharing
   const [errorMessage, setErrorMessage] = useState('');
+  const [recipientEmail, setRecipientEmail] = useState('');
+  const [pendingShares, setPendingShares] = useState([]);
 
   const token = localStorage.getItem('token');
 
@@ -104,9 +105,9 @@ export const FileManagement = () => {
   };
 
   // Handle file download
-  const handleFileDownload = async (fileId, fileName) => {
+  const handleFileDownload = async (mongoFileId, fileName) => {
     try {
-      const response = await fetch(`https://localhost:44332/api/files/download/${fileId}`, {
+      const response = await fetch(`https://localhost:44332/api/files/download/${mongoFileId}`, {
         method: 'GET',
         headers: { 'Authorization': `Bearer ${token}` },
       });
@@ -153,46 +154,95 @@ export const FileManagement = () => {
     }
   };
 
-  // Share file
-  const handleShareFile = async (fileId) => {
-    if (!recipientUserId) {
-      setErrorMessage('Please select a recipient.');
+  // Handle file sharing
+  const handleShareFile = async (mongoFileId, fileName) => {
+    if (!recipientEmail) {
+      alert('Please enter a recipient email.');
       return;
     }
-
-    const fileToShare = files.find(file => file.mongoFileId === fileId);
-    if (!fileToShare) {
-      setErrorMessage('File not found.');
-      return;
-    }
-
-    const shareData = {
-      SenderUserId: userId,
-      RecipientUserId: recipientUserId,
-      MongoFileId: fileToShare.mongoFileId,
-      FileName: fileToShare.fileName,
-      CreatedAt: new Date().toISOString(),
-    };
 
     try {
-      const response = await fetch('https://localhost:44332/api/files/share', {
+      const response = await fetch('https://localhost:44332/api/files/share-file', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(shareData),
+        body: JSON.stringify({
+          recipientEmail: recipientEmail,
+          mongoFileId: mongoFileId,
+          fileName: fileName,
+        }),
       });
 
       if (response.ok) {
-        alert('File shared successfully!');
-        addActivity(`Shared file: ${fileToShare.fileName}`);
+        alert(`File "${fileName}" shared successfully.`);
+        setRecipientEmail(''); // Clear input field
+        addActivity(`Shared file "${fileName}" with ${recipientEmail}`);
       } else {
-        throw new Error('Error sharing file');
+        const errorText = await response.text();
+        throw new Error(errorText);
       }
     } catch (error) {
       console.error('Error sharing file:', error);
-      setErrorMessage('Error sharing file. Please try again.');
+      alert('Failed to share file. Please try again.');
+    }
+    console.log("File ID being sent:", mongoFileId); // Log the fileId to ensure it's an integer
+
+  };
+
+  // Fetch pending shares
+  const fetchPendingShares = async () => {
+    try {
+      const response = await fetch('https://localhost:44332/api/files/pending-shares', {
+        method: 'GET',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch pending shares.');
+
+      const data = await response.json();
+      setPendingShares(data.$values || []);
+    } catch (error) {
+      console.error('Error fetching pending shares:', error);
+    }
+  };
+
+  // Accept file share
+  const handleAcceptShare = async (shareId) => {
+    try {
+      const response = await fetch(`https://localhost:44332/api/files/accept-share/${shareId}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        alert('File share accepted.');
+        fetchPendingShares();
+        addActivity('Accepted a shared file.');
+      } else throw new Error('Failed to accept file share.');
+    } catch (error) {
+      console.error('Error accepting share:', error);
+      alert('Error accepting file share.');
+    }
+  };
+
+  // Refuse file share
+  const handleRefuseShare = async (shareId) => {
+    try {
+      const response = await fetch(`https://localhost:44332/api/files/refuse-share/${shareId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        alert('File share refused.');
+        fetchPendingShares();
+        addActivity('Refused a shared file.');
+      } else throw new Error('Failed to refuse file share.');
+    } catch (error) {
+      console.error('Error refusing share:', error);
+      alert('Error refusing file share.');
     }
   };
 
@@ -219,7 +269,10 @@ export const FileManagement = () => {
   };
 
   useEffect(() => {
-    if (isSignedIn) fetchFiles();
+    if (isSignedIn) {
+      fetchFiles();
+      fetchPendingShares();
+    }
   }, [fetchFiles, isSignedIn]);
 
   return (
@@ -254,17 +307,40 @@ export const FileManagement = () => {
                     <button className="button" onClick={() => handleFileDownload(file.mongoFileId, file.fileName)}>
                       Download
                     </button>
-                    <button className="button" onClick={() => handleShareFile(file.mongoFileId)}>
-                      Share
-                    </button>
                     <button className="button delete-btn" onClick={() => handleFileDelete(file.mongoFileId, file.fileName)}>
                       Delete
                     </button>
+                    <div className="share-section">
+                      <input
+                        type="email"
+                        placeholder="Recipient's Email"
+                        value={recipientEmail}
+                        onChange={(e) => setRecipientEmail(e.target.value)}
+                      />
+                      <button className="button share-btn" onClick={() => handleShareFile(file.mongoFileId, file.fileName)}>
+                        Share
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))
             ) : (
               <p className="no-files">No files uploaded yet.</p>
+            )}
+          </div>
+
+          <h3>Pending Shares</h3>
+          <div className="pending-shares">
+            {pendingShares.length > 0 ? (
+              pendingShares.map((share) => (
+                <div key={share.shareId} className="pending-share-card">
+                  <span>{share.fileName} shared by {share.senderEmail}</span>
+                  <button className="button accept-btn" onClick={() => handleAcceptShare(share.shareId)}>Accept</button>
+                  <button className="button refuse-btn" onClick={() => handleRefuseShare(share.shareId)}>Refuse</button>
+                </div>
+              ))
+            ) : (
+              <p>No pending file shares.</p>
             )}
           </div>
 
