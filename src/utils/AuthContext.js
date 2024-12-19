@@ -15,9 +15,11 @@ const api = axios.create({
   },
 });
 
+// Add axios request interceptor
 api.interceptors.request.use(config => {
+  const token = localStorage.getItem('token'); // Retrieve token from localStorage
   if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`;
+    config.headers['Authorization'] = `Bearer ${token}`; // Add token to headers if available
   }
   return config;
 });
@@ -27,8 +29,7 @@ export const AuthProvider = ({ children }) => {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const navigate = useNavigate();
 
-  
-  /// Function to handle Google token and authenticate with backend
+  // Function to handle Google token and authenticate with backend
   const authenticateWithBackend = async (token) => {
     try {
       const response = await api.post('/api/auth/google', {
@@ -37,8 +38,8 @@ export const AuthProvider = ({ children }) => {
 
       if (!response.data.jwt) throw new Error('JWT token missing in response');
 
-      localStorage.setItem('token', response.data.jwt);
-      const decodedUser = jwtDecode(response.data.jwt);
+      localStorage.setItem('token', response.data.jwt); // Save the token
+      const decodedUser = jwtDecode(response.data.jwt); // Decode the user from the JWT token
       setUser(decodedUser);
       setIsSignedIn(true);
       console.log('Authenticated with backend:', decodedUser);
@@ -49,23 +50,23 @@ export const AuthProvider = ({ children }) => {
 
   const handleCallbackResponse = (response) => {
     const token = response.credential;
-    authenticateWithBackend(token); 
+    authenticateWithBackend(token); // Pass token to authenticateWithBackend function
   };
 
   const handleSignOut = () => {
     setUser(null);
     setIsSignedIn(false);
-    localStorage.removeItem('token');
-    navigate('/');
-    window.location.reload();
+    localStorage.removeItem('token'); // Clear token on sign-out
+    navigate('/'); // Navigate to home page
+    window.location.reload(); // Reload the page to reset the app state
   };
 
   // Load user info from token on initial load
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('token'); // Check if token exists in localStorage
     if (token) {
       try {
-        const decodedUser = jwtDecode(token);
+        const decodedUser = jwtDecode(token); // Decode token to get user info
         setUser(decodedUser);
         setIsSignedIn(true);
       } catch (error) {
@@ -76,7 +77,7 @@ export const AuthProvider = ({ children }) => {
       // Initialize Google sign-in if not signed in
       google.accounts.id.initialize({
         client_id: "911031744599-l50od06i5t89bmdl4amjjhdvacsdonm7.apps.googleusercontent.com",
-        callback: handleCallbackResponse,
+        callback: handleCallbackResponse, // Handle the response after Google login
       });
 
       google.accounts.id.renderButton(
