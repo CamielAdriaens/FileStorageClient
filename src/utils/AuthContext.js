@@ -1,8 +1,8 @@
 /* global google */
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
+import { jwtDecode } from 'jwt-decode';
 
 const AuthContext = createContext();
 
@@ -11,74 +11,60 @@ export const AuthProvider = ({ children }) => {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const navigate = useNavigate();
 
-  // Send Google token to the back-end for validation and to get the server-generated JWT
+  // Function to handle Google token and authenticate with backend
   const authenticateWithBackend = async (token) => {
     try {
-      const response = await fetch('http://localhost:39739/api/auth/google', {
+      const response = await fetch('https://localhost:44332/api/auth/google', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ Credential: token })
       });
-      
+
       if (!response.ok) throw new Error('Failed to authenticate with the backend');
 
       const data = await response.json();
-      
-      // Save the server's JWT token
-      localStorage.setItem('token', data.jwt);
-      setUser(data); // Set the user data (e.g., email, name)
-      setIsSignedIn(true);
 
-      console.log("Successfully authenticated with the backend!");
-      console.log("User Data:", data);
-      console.log("JWT Token:", data.jwt);
+      if (data.jwt) {
+        localStorage.setItem('token', data.jwt);
+        const decodedUser = jwtDecode(data.jwt);
+        setUser(decodedUser);
+        setIsSignedIn(true);
+        console.log("Authenticated with backend:", decodedUser);
+      } else {
+        throw new Error('JWT token missing in response');
+      }
     } catch (error) {
       console.error("Backend authentication failed:", error);
     }
   };
 
-  // Handle Google Sign-In callback
   const handleCallbackResponse = (response) => {
-    const googleToken = response.credential;
-    authenticateWithBackend(googleToken); // Authenticate with backend
+    const token = response.credential;
+    authenticateWithBackend(token); 
   };
 
-  // Logout function with redirect to homepage
   const handleSignOut = () => {
     setUser(null);
     setIsSignedIn(false);
     localStorage.removeItem('token');
-    navigate('/'); // Redirect to the homepage
+    navigate('/');
+    window.location.reload();
   };
 
-  // Function to re-authenticate if the token is expired or invalid
-  const reAuthenticate = () => {
-    console.warn("Re-authenticating user...");
-
-    // Clear current user data and token
-    setUser(null);
-    setIsSignedIn(false);
-    localStorage.removeItem('token');
-
-    // Redirect to login page or reinitialize Google Sign-In
-    google.accounts.id.prompt();
-  };
-
-  // Initialize Google sign-in on component mount or validate existing token
+  // Load user info from token on initial load
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        const userObject = jwtDecode(token);
-        setUser(userObject);
+        const decodedUser = jwtDecode(token);
+        setUser(decodedUser);
         setIsSignedIn(true);
       } catch (error) {
-        console.error("Token invalid or expired", error);
-        localStorage.removeItem('token');
-        reAuthenticate(); // Trigger re-authentication if token is invalid
+        console.error("Failed to decode token:", error);
+        localStorage.removeItem('token'); // Clear invalid token
       }
     } else {
-      // Initialize Google Sign-In if not logged in
+      // Initialize Google sign-in if not signed in
       google.accounts.id.initialize({
         client_id: "911031744599-l50od06i5t89bmdl4amjjhdvacsdonm7.apps.googleusercontent.com",
         callback: handleCallbackResponse,
@@ -91,10 +77,10 @@ export const AuthProvider = ({ children }) => {
 
       google.accounts.id.prompt();
     }
-  }, []); // Run only once on initial load
+  }, []); // Empty dependency array to run only on mount
 
   return (
-    <AuthContext.Provider value={{ user, isSignedIn, handleSignOut, reAuthenticate }}>
+    <AuthContext.Provider value={{ user, isSignedIn, handleSignOut }}>
       {children}
     </AuthContext.Provider>
   );
