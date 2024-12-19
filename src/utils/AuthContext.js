@@ -6,28 +6,34 @@ import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
 
 const AuthContext = createContext();
+const baseURL = window.location.hostname === 'localhost' ? 'https://localhost:44332' : 'http://filestorageserverapp:8080';
+
+const api = axios.create({
+  baseURL,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
+api.interceptors.request.use(config => {
+  if (token) {
+    config.headers['Authorization'] = `Bearer ${token}`;
+  }
+  return config;
+});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const navigate = useNavigate();
 
-  // Function to determine if the app is running inside Docker or locally
-  const getApiBaseUrl = () => {
-    if (window.location.hostname === 'backend') {
-      return 'http://filestorageserverapp:8081'; // Docker API URL
-    } else {
-      return 'https://localhost:44332'; // Local API URL
-    }
-  };
-
-  // Function to handle Google token and authenticate with backend
+  
+  /// Function to handle Google token and authenticate with backend
   const authenticateWithBackend = async (token) => {
     try {
-      const response = await axios.post(
-        `${getApiBaseUrl()}/api/auth/google`, 
-        { Credential: token }
-      );
+      const response = await api.post('/api/auth/google', {
+        Credential: token,
+      });
 
       if (!response.data.jwt) throw new Error('JWT token missing in response');
 
@@ -35,9 +41,9 @@ export const AuthProvider = ({ children }) => {
       const decodedUser = jwtDecode(response.data.jwt);
       setUser(decodedUser);
       setIsSignedIn(true);
-      console.log("Authenticated with backend:", decodedUser);
+      console.log('Authenticated with backend:', decodedUser);
     } catch (error) {
-      console.error("Backend authentication failed:", error);
+      console.error('Backend authentication failed:', error);
     }
   };
 
