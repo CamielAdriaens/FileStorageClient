@@ -1,5 +1,7 @@
+/*global google*/
+
 import { useState, useEffect } from 'react';
-import axiosInstance from './axiosInstance'; // Import the axiosInstance you created
+import axiosInstance from './axiosinstance'; // Import the axiosInstance you created
 
 export function useGoogleAuth() {
   const [user, setUser] = useState({});

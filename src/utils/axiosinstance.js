@@ -1,3 +1,5 @@
+/*global google*/
+
 import axios from 'axios';
 
 // Check if running in Docker environment
