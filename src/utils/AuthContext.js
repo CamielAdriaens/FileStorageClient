@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   // Function to determine if the app is running inside Docker or locally
   const getApiBaseUrl = () => {
     if (window.location.hostname === 'backend') {
-      return 'http://backend:8081'; // Docker API URL
+      return 'http://filestorageserverapp:8081'; // Docker API URL
     } else {
       return 'https://localhost:44332'; // Local API URL
     }

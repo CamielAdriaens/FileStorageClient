@@ -18,10 +18,8 @@ export const FileManagement = () => {
   const [pendingShares, setPendingShares] = useState([]);
 
   const token = localStorage.getItem('token');
-  // Determine the base URL depending on environment (Docker or local)
   const baseURL = window.location.hostname === 'localhost' ? 'https://localhost:44332' : 'http://filestorageserverapp:8081';
 
-  // Create an axios instance
   const api = axios.create({
     baseURL,
     headers: {
@@ -29,7 +27,6 @@ export const FileManagement = () => {
     },
   });
 
-  // Add token to axios headers for secure requests
   api.interceptors.request.use(config => {
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`;
