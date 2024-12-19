@@ -1,45 +1,26 @@
-/* global google */
-
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import axios from 'axios';
+import axiosInstance from './axiosinstance';  // Import the axios instance we created
 
 const AuthContext = createContext();
-const baseURL = window.location.hostname === 'localhost' ? 'https://localhost:44332' : 'http://backend:8080';
-
-const api = axios.create({
-  baseURL,
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-// Add axios request interceptor
-api.interceptors.request.use(config => {
-  const token = localStorage.getItem('token'); // Retrieve token from localStorage
-  if (token) {
-    config.headers['Authorization'] = `Bearer ${token}`; // Add token to headers if available
-  }
-  return config;
-});
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isSignedIn, setIsSignedIn] = useState(false);
   const navigate = useNavigate();
 
-  // Function to handle Google token and authenticate with backend
+  // Function to authenticate with backend
   const authenticateWithBackend = async (token) => {
     try {
-      const response = await api.post('/api/auth/google', {
+      const response = await axiosInstance.post('/api/auth/google', {
         Credential: token,
       });
 
       if (!response.data.jwt) throw new Error('JWT token missing in response');
 
-      localStorage.setItem('token', response.data.jwt); // Save the token
-      const decodedUser = jwtDecode(response.data.jwt); // Decode the user from the JWT token
+      localStorage.setItem('token', response.data.jwt);
+      const decodedUser = jwtDecode(response.data.jwt);
       setUser(decodedUser);
       setIsSignedIn(true);
       console.log('Authenticated with backend:', decodedUser);
@@ -48,25 +29,27 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // Handle the callback response from Google
   const handleCallbackResponse = (response) => {
     const token = response.credential;
-    authenticateWithBackend(token); // Pass token to authenticateWithBackend function
+    authenticateWithBackend(token);
   };
 
+  // Handle sign-out
   const handleSignOut = () => {
     setUser(null);
     setIsSignedIn(false);
-    localStorage.removeItem('token'); // Clear token on sign-out
-    navigate('/'); // Navigate to home page
-    window.location.reload(); // Reload the page to reset the app state
+    localStorage.removeItem('token');
+    navigate('/');
+    window.location.reload();
   };
 
   // Load user info from token on initial load
   useEffect(() => {
-    const token = localStorage.getItem('token'); // Check if token exists in localStorage
+    const token = localStorage.getItem('token');
     if (token) {
       try {
-        const decodedUser = jwtDecode(token); // Decode token to get user info
+        const decodedUser = jwtDecode(token);
         setUser(decodedUser);
         setIsSignedIn(true);
       } catch (error) {
@@ -77,7 +60,7 @@ export const AuthProvider = ({ children }) => {
       // Initialize Google sign-in if not signed in
       google.accounts.id.initialize({
         client_id: "911031744599-l50od06i5t89bmdl4amjjhdvacsdonm7.apps.googleusercontent.com",
-        callback: handleCallbackResponse, // Handle the response after Google login
+        callback: handleCallbackResponse,
       });
 
       google.accounts.id.renderButton(

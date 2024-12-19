@@ -4,7 +4,7 @@ import '../App.css';
 import './FileManagement.css';
 import SearchFilter from './SearchFilter';
 import FilePreview from './FilePreview';
-import axios from 'axios';
+import axiosInstance from '../utils/axiosinstance'; // Import your axiosInstance
 
 export const FileManagement = () => {
   const { isSignedIn, userId } = useAuth(); // Assumes `userId` is available from AuthContext
@@ -17,24 +17,9 @@ export const FileManagement = () => {
   const [recipientEmail, setRecipientEmail] = useState('');
   const [pendingShares, setPendingShares] = useState([]);
 
-  const token = localStorage.getItem('token');
-  const baseURL = window.location.hostname === 'localhost' ? 'https://localhost:44332' : 'http://backend:8080';
+  const token = localStorage.getItem('token'); // Token will be used in axiosInstance
 
-  const api = axios.create({
-    baseURL,
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  api.interceptors.request.use(config => {
-    if (token) {
-      config.headers['Authorization'] = `Bearer ${token}`;
-    }
-    return config;
-  });
-
-  // Fetch files from server
+  // Fetch files from the server
   const fetchFiles = useCallback(async () => {
     if (!token) {
       console.error('No JWT token found. Please log in again.');
@@ -42,7 +27,7 @@ export const FileManagement = () => {
     }
 
     try {
-      const response = await api.get('/api/files/secure-files');
+      const response = await axiosInstance.get('/api/files/secure-files');
       console.log("Fetched Data:", response.data);
 
       const fetchedFiles = Array.isArray(response.data.$values) ? response.data.$values : response.data;
@@ -53,7 +38,7 @@ export const FileManagement = () => {
         return {
           ...file,
           type,
-          url: `${baseURL}/api/files/download/${file.mongoFileId}`,
+          url: `${axiosInstance.defaults.baseURL}/api/files/download/${file.mongoFileId}`,
         };
       });
 
@@ -65,8 +50,7 @@ export const FileManagement = () => {
       setFiles([]);
       setFilteredFiles([]);
     }
-  }, [token, baseURL]);
-
+  }, [token]);
 
   // Handle file upload
   const handleFileChange = async (event) => {
@@ -80,9 +64,7 @@ export const FileManagement = () => {
     formData.append('file', fileToUpload);
 
     try {
-      const response = await api.post('/api/files/upload', formData, {
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const response = await axiosInstance.post('/api/files/upload', formData);
 
       if (response.status === 200) {
         alert('File uploaded successfully.');
@@ -100,9 +82,7 @@ export const FileManagement = () => {
   // Handle file download
   const handleFileDownload = async (mongoFileId, fileName) => {
     try {
-      const response = await api.get(`/api/files/download/${mongoFileId}`, {
-        responseType: 'blob',
-      });
+      const response = await axiosInstance.get(`/api/files/download/${mongoFileId}`, { responseType: 'blob' });
 
       if (response.status === 200) {
         const blob = response.data;
@@ -122,12 +102,13 @@ export const FileManagement = () => {
       alert('Error downloading file. Please try again.');
     }
   };
- // Handle file deletion
+
+  // Handle file deletion
   const handleFileDelete = async (fileId, fileName) => {
     if (!window.confirm('Are you sure you want to delete this file?')) return;
 
     try {
-      const response = await api.delete(`/api/files/delete/${fileId}`);
+      const response = await axiosInstance.delete(`/api/files/delete/${fileId}`);
 
       if (response.status === 200) {
         alert('File deleted successfully.');
@@ -141,6 +122,7 @@ export const FileManagement = () => {
       alert('Error deleting file. Please try again.');
     }
   };
+
   // Add activity to localStorage
   const addActivity = (message) => {
     const newActivity = { message, timestamp: new Date().toLocaleString() };
@@ -151,11 +133,6 @@ export const FileManagement = () => {
     });
   };
 
-  useEffect(() => {
-    if (isSignedIn) {
-      fetchFiles();
-    }
-  }, [fetchFiles, isSignedIn]);
   // Handle file sharing
   const handleShareFile = async (mongoFileId, fileName) => {
     if (!recipientEmail) {
@@ -164,47 +141,30 @@ export const FileManagement = () => {
     }
 
     try {
-      const response = await fetch('https://localhost:44332/api/files/share-file', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          recipientEmail: recipientEmail,
-          mongoFileId: mongoFileId,
-          fileName: fileName,
-        }),
+      const response = await axiosInstance.post('/api/files/share-file', {
+        recipientEmail,
+        mongoFileId,
+        fileName,
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         alert(`File "${fileName}" shared successfully.`);
         setRecipientEmail(''); // Clear input field
         addActivity(`Shared file "${fileName}" with ${recipientEmail}`);
       } else {
-        const errorText = await response.text();
-        throw new Error(errorText);
+        throw new Error('Failed to share file.');
       }
     } catch (error) {
       console.error('Error sharing file:', error);
       alert('Failed to share file. Please try again.');
     }
-    console.log("File ID being sent:", mongoFileId); // Log the fileId to ensure it's an integer
-
   };
 
   // Fetch pending shares
   const fetchPendingShares = async () => {
     try {
-      const response = await fetch('https://localhost:44332/api/files/pending-shares', {
-        method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      if (!response.ok) throw new Error('Failed to fetch pending shares.');
-
-      const data = await response.json();
-      setPendingShares(data.$values || []);
+      const response = await axiosInstance.get('/api/files/pending-shares');
+      setPendingShares(response.data.$values || []);
     } catch (error) {
       console.error('Error fetching pending shares:', error);
     }
@@ -213,16 +173,14 @@ export const FileManagement = () => {
   // Accept file share
   const handleAcceptShare = async (shareId) => {
     try {
-      const response = await fetch(`https://localhost:44332/api/files/accept-share/${shareId}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      if (response.ok) {
+      const response = await axiosInstance.post(`/api/files/accept-share/${shareId}`);
+      if (response.status === 200) {
         alert('File share accepted.');
         fetchPendingShares();
         addActivity('Accepted a shared file.');
-      } else throw new Error('Failed to accept file share.');
+      } else {
+        throw new Error('Failed to accept file share.');
+      }
     } catch (error) {
       console.error('Error accepting share:', error);
       alert('Error accepting file share.');
@@ -232,16 +190,14 @@ export const FileManagement = () => {
   // Refuse file share
   const handleRefuseShare = async (shareId) => {
     try {
-      const response = await fetch(`https://localhost:44332/api/files/refuse-share/${shareId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
-
-      if (response.ok) {
+      const response = await axiosInstance.delete(`/api/files/refuse-share/${shareId}`);
+      if (response.status === 200) {
         alert('File share refused.');
         fetchPendingShares();
         addActivity('Refused a shared file.');
-      } else throw new Error('Failed to refuse file share.');
+      } else {
+        throw new Error('Failed to refuse file share.');
+      }
     } catch (error) {
       console.error('Error refusing share:', error);
       alert('Error refusing file share.');
