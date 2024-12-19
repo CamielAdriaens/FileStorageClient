@@ -4,7 +4,7 @@ import axios from 'axios';
 
 // Check if running in Docker environment
 let docker = false; // Default to false (local environment)
-docker = Boolean(import.meta.env.vite_docker); // Dynamically set based on the environment variable
+docker = Boolean(import.meta.env.VITE_DOCKER); // Dynamically set based on the environment variable
 
 // Set the backend URL based on the environment
 let backendurl;
