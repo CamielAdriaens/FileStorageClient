@@ -18,7 +18,7 @@ export const FileManagement = () => {
   const [pendingShares, setPendingShares] = useState([]);
 
   const token = localStorage.getItem('token');
-  const baseURL = window.location.hostname === 'localhost' ? 'https://localhost:44332' : 'http://filestorageserverapp:8080';
+  const baseURL = window.location.hostname === 'localhost' ? 'https://localhost:44332' : 'http://backend:8080';
 
   const api = axios.create({
     baseURL,

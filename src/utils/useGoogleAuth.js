@@ -9,7 +9,7 @@ export function useGoogleAuth() {
   const getApiBaseUrl = () => {
     // Checking if the app is running in Docker
     if (window.location.hostname === 'backend') {
-      return 'http://filestorageserveapp:8080'; // Docker API URL
+      return 'http://backend:8080'; // Docker API URL
     } else {
       return 'https://localhost:44332'; // Local API URL
     }

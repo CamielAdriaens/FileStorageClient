@@ -6,7 +6,7 @@ import { jwtDecode } from 'jwt-decode';
 import axios from 'axios';
 
 const AuthContext = createContext();
-const baseURL = window.location.hostname === 'localhost' ? 'https://localhost:44332' : 'http://filestorageserverapp:8080';
+const baseURL = window.location.hostname === 'localhost' ? 'https://localhost:44332' : 'http://backend:8080';
 
 const api = axios.create({
   baseURL,
