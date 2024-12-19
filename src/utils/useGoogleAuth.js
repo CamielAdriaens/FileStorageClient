@@ -1,28 +1,32 @@
-/* global google */
-
 import { useState, useEffect } from 'react';
+import axios from 'axios';
 
 export function useGoogleAuth() {
   const [user, setUser] = useState({});
   const [isSignedIn, setIsSignedIn] = useState(false);
 
+  // Function to determine if the app is running inside Docker or locally
+  const getApiBaseUrl = () => {
+    // Checking if the app is running in Docker
+    if (window.location.hostname === 'backend') {
+      return 'http://backend:8081'; // Docker API URL
+    } else {
+      return 'https://localhost:44332'; // Local API URL
+    }
+  };
+
   const handleCallbackResponse = (response) => {
     const token = response.credential;
     // Send the token to backend for further validation
-    fetch('https://localhost:44332/api/auth/google', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ Credential: token })
-    })
-    .then(response => response.json())
-    .then(data => {
-      if (data.jwt) {
-        localStorage.setItem('token', data.jwt);
-        setUser(data); // Store user info from backend
-        setIsSignedIn(true);
-      }
-    })
-    .catch(error => console.error("Authentication failed:", error));
+    axios.post(`${getApiBaseUrl()}/api/auth/google`, { Credential: token })
+      .then(response => {
+        if (response.data.jwt) {
+          localStorage.setItem('token', response.data.jwt);
+          setUser(response.data); // Store user info from backend
+          setIsSignedIn(true);
+        }
+      })
+      .catch(error => console.error("Authentication failed:", error));
   };
 
   const handleSignOut = () => {

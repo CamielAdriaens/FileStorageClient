@@ -4,6 +4,7 @@ import '../App.css';
 import './FileManagement.css';
 import SearchFilter from './SearchFilter';
 import FilePreview from './FilePreview';
+import axios from 'axios';
 
 export const FileManagement = () => {
   const { isSignedIn, userId } = useAuth(); // Assumes `userId` is available from AuthContext
@@ -17,6 +18,24 @@ export const FileManagement = () => {
   const [pendingShares, setPendingShares] = useState([]);
 
   const token = localStorage.getItem('token');
+  // Determine the base URL depending on environment (Docker or local)
+  const baseURL = window.location.hostname === 'localhost' ? 'https://localhost:44332' : 'http://filestorageserverapp:8081';
+
+  // Create an axios instance
+  const api = axios.create({
+    baseURL,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  // Add token to axios headers for secure requests
+  api.interceptors.request.use(config => {
+    if (token) {
+      config.headers['Authorization'] = `Bearer ${token}`;
+    }
+    return config;
+  });
 
   // Fetch files from server
   const fetchFiles = useCallback(async () => {
@@ -26,22 +45,10 @@ export const FileManagement = () => {
     }
 
     try {
-      const response = await fetch('https://localhost:44332/api/files/secure-files', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.get('/api/files/secure-files');
+      console.log("Fetched Data:", response.data);
 
-      if (!response.ok) {
-        throw new Error(`Error fetching files: ${response.status} ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      console.log("Fetched Data:", data);
-
-      const fetchedFiles = Array.isArray(data.$values) ? data.$values : data;
+      const fetchedFiles = Array.isArray(response.data.$values) ? response.data.$values : response.data;
 
       const filesWithTypes = fetchedFiles.map(file => {
         const extension = file.fileName.split('.').pop().toLowerCase();
@@ -49,7 +56,7 @@ export const FileManagement = () => {
         return {
           ...file,
           type,
-          url: `https://localhost:44332/api/files/download/${file.mongoFileId}`,
+          url: `${baseURL}/api/files/download/${file.mongoFileId}`,
         };
       });
 
@@ -61,17 +68,8 @@ export const FileManagement = () => {
       setFiles([]);
       setFilteredFiles([]);
     }
-  }, [token]);
+  }, [token, baseURL]);
 
-  // Log activity to localStorage
-  const addActivity = (message) => {
-    const newActivity = { message, timestamp: new Date().toLocaleString() };
-    setActivities((prev) => {
-      const updated = [newActivity, ...prev];
-      localStorage.setItem('activities', JSON.stringify(updated));
-      return updated;
-    });
-  };
 
   // Handle file upload
   const handleFileChange = async (event) => {
@@ -85,13 +83,11 @@ export const FileManagement = () => {
     formData.append('file', fileToUpload);
 
     try {
-      const response = await fetch('https://localhost:44332/api/files/upload', {
-        method: 'POST',
+      const response = await api.post('/api/files/upload', formData, {
         headers: { 'Authorization': `Bearer ${token}` },
-        body: formData,
       });
 
-      if (response.ok) {
+      if (response.status === 200) {
         alert('File uploaded successfully.');
         fetchFiles(); // Refresh file list
         addActivity(`Uploaded file: ${fileToUpload.name}`);
@@ -107,13 +103,12 @@ export const FileManagement = () => {
   // Handle file download
   const handleFileDownload = async (mongoFileId, fileName) => {
     try {
-      const response = await fetch(`https://localhost:44332/api/files/download/${mongoFileId}`, {
-        method: 'GET',
-        headers: { 'Authorization': `Bearer ${token}` },
+      const response = await api.get(`/api/files/download/${mongoFileId}`, {
+        responseType: 'blob',
       });
 
-      if (response.ok) {
-        const blob = await response.blob();
+      if (response.status === 200) {
+        const blob = response.data;
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
@@ -130,18 +125,14 @@ export const FileManagement = () => {
       alert('Error downloading file. Please try again.');
     }
   };
-
-  // Handle file deletion
+ // Handle file deletion
   const handleFileDelete = async (fileId, fileName) => {
     if (!window.confirm('Are you sure you want to delete this file?')) return;
 
     try {
-      const response = await fetch(`https://localhost:44332/api/files/delete/${fileId}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` },
-      });
+      const response = await api.delete(`/api/files/delete/${fileId}`);
 
-      if (response.ok) {
+      if (response.status === 200) {
         alert('File deleted successfully.');
         fetchFiles(); // Refresh file list
         addActivity(`Deleted file: ${fileName}`);
@@ -153,7 +144,21 @@ export const FileManagement = () => {
       alert('Error deleting file. Please try again.');
     }
   };
+  // Add activity to localStorage
+  const addActivity = (message) => {
+    const newActivity = { message, timestamp: new Date().toLocaleString() };
+    setActivities((prev) => {
+      const updated = [newActivity, ...prev];
+      localStorage.setItem('activities', JSON.stringify(updated));
+      return updated;
+    });
+  };
 
+  useEffect(() => {
+    if (isSignedIn) {
+      fetchFiles();
+    }
+  }, [fetchFiles, isSignedIn]);
   // Handle file sharing
   const handleShareFile = async (mongoFileId, fileName) => {
     if (!recipientEmail) {

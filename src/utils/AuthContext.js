@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
@@ -11,28 +12,30 @@ export const AuthProvider = ({ children }) => {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const navigate = useNavigate();
 
+  // Function to determine if the app is running inside Docker or locally
+  const getApiBaseUrl = () => {
+    if (window.location.hostname === 'backend') {
+      return 'http://backend:8081'; // Docker API URL
+    } else {
+      return 'https://localhost:44332'; // Local API URL
+    }
+  };
+
   // Function to handle Google token and authenticate with backend
   const authenticateWithBackend = async (token) => {
     try {
-      const response = await fetch('https://localhost:44332/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ Credential: token })
-      });
+      const response = await axios.post(
+        `${getApiBaseUrl()}/api/auth/google`, 
+        { Credential: token }
+      );
 
-      if (!response.ok) throw new Error('Failed to authenticate with the backend');
+      if (!response.data.jwt) throw new Error('JWT token missing in response');
 
-      const data = await response.json();
-
-      if (data.jwt) {
-        localStorage.setItem('token', data.jwt);
-        const decodedUser = jwtDecode(data.jwt);
-        setUser(decodedUser);
-        setIsSignedIn(true);
-        console.log("Authenticated with backend:", decodedUser);
-      } else {
-        throw new Error('JWT token missing in response');
-      }
+      localStorage.setItem('token', response.data.jwt);
+      const decodedUser = jwtDecode(response.data.jwt);
+      setUser(decodedUser);
+      setIsSignedIn(true);
+      console.log("Authenticated with backend:", decodedUser);
     } catch (error) {
       console.error("Backend authentication failed:", error);
     }
