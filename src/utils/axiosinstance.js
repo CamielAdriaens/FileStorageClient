@@ -3,16 +3,13 @@
 import axios from 'axios';
 
 // Check if running in Docker environment
-let docker = false; // Default to false (local environment)
-docker = Boolean(import.meta.env.VITE_DOCKER); // Dynamically set based on the environment variable
+const docker = import.meta.env?.VITE_DOCKER === 'true'; // Safely check and cast to boolean
+console.log('VITE_DOCKER:', docker);
 
 // Set the backend URL based on the environment
-let backendurl;
-if (docker) {
-  backendurl = 'http://backend:8080'; // Docker network address
-} else {
-  backendurl = 'https://localhost:44332'; // Local development URL
-}
+const backendurl = docker
+  ? 'http://backend:8080' // Docker network address
+  : 'https://localhost:44332'; // Local development URL
 
 // Retrieve the token from localStorage
 const token = localStorage.getItem('token');
@@ -22,7 +19,7 @@ const axiosInstance = axios.create({
   baseURL: backendurl,
   headers: {
     'Content-Type': 'application/json',
-    ...(token ? { 'Authorization': `Bearer ${token}` } : {}), // Add Authorization header if token exists
+    ...(token ? { Authorization: `Bearer ${token}` } : {}), // Add Authorization header if token exists
   },
   withCredentials: true, // Allow sending credentials if necessary
 });

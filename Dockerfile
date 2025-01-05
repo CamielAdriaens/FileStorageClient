@@ -2,23 +2,30 @@
 
 FROM node:20.9.0
 
-# Set working directory
+# Set the working directory
 WORKDIR /app
 
+# Copy package files first to leverage Docker's caching
 COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
 
-# Same as npm install
+# Install dependencies
 RUN npm ci
 
+# Copy the rest of the application files
 COPY . /app
 
-
+# Set environment variables
 ENV CI=true
+ENV VITE_DOCKER=true
 ENV PORT=3000
 
-ENV VITE_DOCKER=true;
+# Build the React application
+RUN npm run build
 
-EXPOSE 7058
+# Expose the port for the container
+EXPOSE 3000
 
-CMD [ "npm", "run", "start" ]
+# Serve the application using a static server
+RUN npm install -g serve
+CMD ["serve", "-s", "build", "-l", "3000"]
