@@ -3,8 +3,8 @@
 import axios from 'axios';
 
 // Check if running in Docker environment
-const docker = import.meta.env?.VITE_DOCKER === 'true'; // Safely check and cast to boolean
-console.log('VITE_DOCKER:', docker);
+const docker = Boolean(import.meta.env.VITE_DOCKER || false);
+console.log('Running in Docker:', docker);
 
 // Set the backend URL based on the environment
 const backendurl = docker

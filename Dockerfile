@@ -10,22 +10,16 @@ COPY package.json /app/package.json
 COPY package-lock.json /app/package-lock.json
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy the rest of the application files
 COPY . /app
 
-# Set environment variables
-ENV CI=true
+# Set environment variables for the build
 ENV VITE_DOCKER=true
-ENV PORT=3000
 
-# Build the React application
+# Build the application
 RUN npm run build
 
-# Expose the port for the container
-EXPOSE 3000
-
-# Serve the application using a static server
-RUN npm install -g serve
-CMD ["serve", "-s", "build", "-l", "3000"]
+# Serve the built application
+CMD [ "npm", "run", "start" ]
