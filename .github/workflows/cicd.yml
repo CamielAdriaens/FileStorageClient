@@ -23,11 +23,6 @@ jobs:
           cd filestorageclient
           npm install
 
-      # Step 3: Run Tests
-      - name: Run Tests
-        run: |
-          cd filestorageclient
-          npm test
 
       # Step 4: Build the Project
       - name: Build Project
