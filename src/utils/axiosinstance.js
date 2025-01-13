@@ -3,7 +3,7 @@
 import axios from 'axios';
 
 // Check if running in Docker environment
-const docker = Boolean(import.meta.env.REACT_APP_DOCKER || false);
+const docker = Boolean(process.env.REACT_APP_DOCKER || false);
 console.log('Running in Docker:', docker);
 
 // Set the backend URL based on the environment

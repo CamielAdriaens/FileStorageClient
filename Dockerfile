@@ -16,7 +16,7 @@ RUN npm install
 COPY . /app
 
 # Set environment variables for the build
-ENV VITE_DOCKER=true
+ENV REACT_APP_DOCKER=true
 
 # Build the application
 RUN npm run build
