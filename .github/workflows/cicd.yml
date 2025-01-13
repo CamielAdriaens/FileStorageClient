@@ -27,7 +27,7 @@ jobs:
       # Step 3: Install Dependencies
       - name: Install Dependencies
         run: |
-          cd frontend
+          cd filestorageclient
           npm install
 
       # Step 4: Run Tests
