@@ -113,7 +113,7 @@ const handleFileDelete = async (fileId, fileName) => {
 
   try {
     // Make the DELETE request
-    const response = await axios.delete(`/api/Files/delete/${fileId}`);
+    const response = await axiosInstance.delete(`/api/Files/delete/${fileId}`);
 
     if (response.status === 200) {
       alert('File deleted successfully.');
