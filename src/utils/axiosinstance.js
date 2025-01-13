@@ -8,7 +8,7 @@ console.log('Running in Docker:', docker);
 
 // Set the backend URL based on the environment
 const backendurl = docker
-  ? 'http://localhost:8080' // Docker network address
+  ? 'http://filestorageserverapp:8080' // Docker network address
   : 'https://localhost:44332'; // Local development URL
 
 // Retrieve the token from localStorage
