@@ -52,6 +52,24 @@ export const FileManagement = () => {
     }
   }, [token]);
 
+  // Fetch pending shares from the server
+  const fetchPendingShares = useCallback(async () => {
+    try {
+      const response = await axiosInstance.get('/api/Files/pending-shares');
+      setPendingShares(response.data || []);
+    } catch (error) {
+      console.error('Error fetching pending shares:', error);
+    }
+  }, []);
+
+  // useEffect for fetching files and pending shares
+  useEffect(() => {
+    if (isSignedIn) {
+      fetchFiles();
+      fetchPendingShares(); // Fetch pending shares when signed in
+    }
+  }, [fetchFiles, fetchPendingShares, isSignedIn]);
+
  // Handle file upload
 const handleFileChange = async (event) => {
   const fileToUpload = event.target.files[0];
@@ -137,78 +155,78 @@ const handleFileDelete = async (fileId, fileName) => {
       return updated;
     });
   };
+// Handle file sharing
+const handleShareFile = async (mongoFileId, fileName) => {
+  if (!recipientEmail) {
+    alert('Please enter a recipient email.');
+    return;
+  }
 
-  // Handle file sharing
-  const handleShareFile = async (mongoFileId, fileName) => {
-    if (!recipientEmail) {
-      alert('Please enter a recipient email.');
-      return;
+  try {
+    const response = await axiosInstance.post('/api/Files/share-file', {
+      recipientEmail,
+      mongoFileId,
+      fileName,
+    });
+
+    if (response.status === 200) {
+      alert(`File "${fileName}" shared successfully.`);
+      setRecipientEmail(''); // Clear input field
+      addActivity(`Shared file "${fileName}" with ${recipientEmail}`);
+    } else {
+      throw new Error('Failed to share file.');
     }
+  } catch (error) {
+    console.error('Error sharing file:', error);
 
-    try {
-      const response = await axiosInstance.post('/api/Files/share-file', {
-        recipientEmail,
-        mongoFileId,
-        fileName,
-      });
-
-      if (response.status === 200) {
-        alert(`File "${fileName}" shared successfully.`);
-        setRecipientEmail(''); // Clear input field
-        addActivity(`Shared file "${fileName}" with ${recipientEmail}`);
-      } else {
-        throw new Error('Failed to share file.');
-      }
-    } catch (error) {
-      console.error('Error sharing file:', error);
+    // Handle the specific case where the user is trying to share a file with themselves
+    if (error.response && error.response.status === 400 && error.response.data === "You cannot share files with your own email.") {
+      alert("You cannot share a file with your own email.");
+    } else {
       alert('Failed to share file. Please try again.');
     }
-  };
-
-  // Fetch pending shares
-  const fetchPendingShares = async () => {
-    try {
-      const response = await axiosInstance.get('/api/Files/pending-shares');
-      setPendingShares(response.data.$values || []);
-    } catch (error) {
-      console.error('Error fetching pending shares:', error);
+  }
+};
+const handleAcceptShare = async (shareId, fileName) => {
+  try {
+    const response = await axiosInstance.post(`/api/Files/accept-share/${shareId}`);
+    if (response.status === 200) {
+      alert(`File "${fileName}" share accepted.`);
+      // Remove the accepted share from the list dynamically
+      setPendingShares((prevShares) => prevShares.filter((share) => share.shareId !== shareId));
+      addActivity(`Accepted a shared file: ${fileName}`);
+      
+      // Fetch updated file list
+      fetchFiles();
+    } else {
+      throw new Error('Failed to accept file share.');
     }
-  };
+  } catch (error) {
+    console.error('Error accepting share:', error);
+    alert('Error accepting file share.');
+  }
+};
 
-  // Accept file share
-  const handleAcceptShare = async (shareId) => {
-    try {
-      const response = await axiosInstance.post(`/api/Files/accept-share/${shareId}`);
-      if (response.status === 200) {
-        alert('File share accepted.');
-        fetchPendingShares();
-        addActivity('Accepted a shared file.');
-      } else {
-        throw new Error('Failed to accept file share.');
-      }
-    } catch (error) {
-      console.error('Error accepting share:', error);
-      alert('Error accepting file share.');
+
+// Handle refusing a shared file
+const handleRefuseShare = async (shareId, fileName) => {
+  try {
+    const response = await axiosInstance.delete(`/api/Files/refuse-share/${shareId}`);
+    if (response.status === 200) {
+      alert(`File "${fileName}" share refused.`);
+      // Remove the refused share from the list dynamically
+      setPendingShares((prevShares) => prevShares.filter((share) => share.shareId !== shareId));
+      addActivity(`Refused a shared file: ${fileName}`);
+    } else {
+      throw new Error('Failed to refuse file share.');
     }
-  };
+  } catch (error) {
+    console.error('Error refusing share:', error);
+    alert('Error refusing file share.');
+  }
+};
 
-  // Refuse file share
-  const handleRefuseShare = async (shareId) => {
-    try {
-      const response = await axiosInstance.delete(`/api/Files/refuse-share/${shareId}`);
-      if (response.status === 200) {
-        alert('File share refused.');
-        fetchPendingShares();
-        addActivity('Refused a shared file.');
-      } else {
-        throw new Error('Failed to refuse file share.');
-      }
-    } catch (error) {
-      console.error('Error refusing share:', error);
-      alert('Error refusing file share.');
-    }
-  };
-
+  
   // Search, filter, and sort functionalities
   const handleSearch = (searchTerm) => {
     const filtered = files.filter(file => file.fileName.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -291,21 +309,33 @@ const handleFileDelete = async (fileId, fileName) => {
               <p className="no-files">No files uploaded yet.</p>
             )}
           </div>
-
           <h3>Pending Shares</h3>
           <div className="pending-shares">
-            {pendingShares.length > 0 ? (
-              pendingShares.map((share) => (
-                <div key={share.shareId} className="pending-share-card">
-                  <span>{share.fileName} shared by {share.senderEmail}</span>
-                  <button className="button accept-btn" onClick={() => handleAcceptShare(share.shareId)}>Accept</button>
-                  <button className="button refuse-btn" onClick={() => handleRefuseShare(share.shareId)}>Refuse</button>
-                </div>
-              ))
-            ) : (
-              <p>No pending file shares.</p>
-            )}
-          </div>
+  {pendingShares.length > 0 ? (
+    pendingShares.map((share) => (
+      <div key={share.shareId} className="pending-share-card">
+        <span>{share.fileName} shared by {share.senderEmail}</span>
+        <button
+          className="button accept-btn"
+          onClick={() => handleAcceptShare(share.shareId, share.fileName)}
+        >
+          Accept
+        </button>
+        <button
+          className="button refuse-btn"
+          onClick={() => handleRefuseShare(share.shareId, share.fileName)}
+        >
+          Refuse
+        </button>
+      </div>
+    ))
+  ) : (
+    <p>No pending file shares.</p>
+  )}
+</div>
+
+
+
 
           {previewFile && <FilePreview file={previewFile} onClose={() => setPreviewFile(null)} />}
         </>
