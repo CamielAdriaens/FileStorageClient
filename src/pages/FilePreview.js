@@ -8,7 +8,8 @@ const FilePreview = ({ file, onClose }) => {
   useEffect(() => {
     const fetchFile = async () => {
       try {
-        const response = await fetch(`https://localhost:44332/api/files/download/${file.mongoFileId}`, {
+
+        const response = await axiosInstance.get(`/api/Files/download/${file.mongoFileId}`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
