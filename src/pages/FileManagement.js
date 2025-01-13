@@ -108,24 +108,25 @@ const handleFileChange = async (event) => {
   };
 
   // Handle file deletion
-  const handleFileDelete = async (fileId, fileName) => {
-    if (!window.confirm('Are you sure you want to delete this file?')) return;
+const handleFileDelete = async (fileId, fileName) => {
+  if (!window.confirm('Are you sure you want to delete this file?')) return;
 
-    try {
-      const response = await axiosInstance.delete(`/api/Files/delete/${fileId}`);
+  try {
+    // Make the DELETE request
+    const response = await axios.delete(`/api/Files/delete/${fileId}`);
 
-      if (response.status === 200) {
-        alert('File deleted successfully.');
-        fetchFiles(); // Refresh file list
-        addActivity(`Deleted file: ${fileName}`);
-      } else {
-        throw new Error(`File deletion failed: ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error('Error deleting file:', error);
-      alert('Error deleting file. Please try again.');
+    if (response.status === 200) {
+      alert('File deleted successfully.');
+      fetchFiles(); // Refresh file list
+      addActivity(`Deleted file: ${fileName}`);
+    } else {
+      throw new Error(`File deletion failed: ${response.statusText}`);
     }
-  };
+  } catch (error) {
+    console.error('Error deleting file:', error);
+    alert('Error deleting file. Please try again.');
+  }
+};
 
   // Add activity to localStorage
   const addActivity = (message) => {
