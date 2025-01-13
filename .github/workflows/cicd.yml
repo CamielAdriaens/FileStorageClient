@@ -33,13 +33,13 @@ jobs:
       # Step 4: Run Tests
       - name: Run Tests
         run: |
-          cd frontend
+          cd filestorageclient
           npm test
 
       # Step 5: Build Frontend
       - name: Build Frontend
         run: |
-          cd frontend
+          cd filestorageclient
           npm run build
 
       # Step 6: Set up Docker Buildx
@@ -56,11 +56,11 @@ jobs:
       # Step 8: Build Docker Image for Frontend
       - name: Build Frontend Docker Image
         run: |
-          cd frontend
+          cd filestorageclient
           docker build -t camieladriaen/dockertestfilestorage-frontend:${{ github.sha }} .
 
       # Step 9: Push Docker Image to Docker Hub
       - name: Push Frontend Docker Image to Docker Hub
         run: |
-          cd frontend
+          cd filestorageclient
           docker push camieladriaen/dockertestfilestorage-frontend:${{ github.sha }}
