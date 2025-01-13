@@ -52,33 +52,37 @@ export const FileManagement = () => {
     }
   }, [token]);
 
-  // Handle file upload
-  const handleFileChange = async (event) => {
-    const fileToUpload = event.target.files[0];
-    if (!fileToUpload) {
-      alert('Please select a file to upload.');
-      return;
+ // Handle file upload
+const handleFileChange = async (event) => {
+  const fileToUpload = event.target.files[0];
+  if (!fileToUpload) {
+    alert('Please select a file to upload.');
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append('file', fileToUpload);
+
+  try {
+    // Ensure axios instance is correctly configured
+    const response = await axiosInstance.post('/api/Files/upload', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (response.status === 200) {
+      alert('File uploaded successfully.');
+      fetchFiles(); // Refresh file list
+      addActivity(`Uploaded file: ${fileToUpload.name}`);
+    } else {
+      throw new Error(`File upload failed: ${response.statusText}`);
     }
-
-    const formData = new FormData();
-    formData.append('file', fileToUpload);
-
-    try {
-      const response = await axiosInstance.post('/api/Files/upload', formData);
-
-      if (response.status === 200) {
-        alert('File uploaded successfully.');
-        fetchFiles(); // Refresh file list
-        addActivity(`Uploaded file: ${fileToUpload.name}`);
-      } else {
-        throw new Error(`File upload failed: ${response.statusText}`);
-      }
-    } catch (error) {
-      console.error('Error uploading file:', error);
-      alert('Error uploading file. Please try again.');
-    }
-  };
-
+  } catch (error) {
+    console.error('Error uploading file:', error);
+    alert('Error uploading file. Please try again.');
+  }
+};
   // Handle file download
   const handleFileDownload = async (mongoFileId, fileName) => {
     try {
