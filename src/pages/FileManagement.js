@@ -38,7 +38,7 @@ export const FileManagement = () => {
         return {
           ...file,
           type,
-          url: `${axiosInstance.defaults.baseURL}/api/files/download/${file.mongoFileId}`,
+          url: `${axiosInstance.defaults.baseURL}/api/Files/download/${file.mongoFileId}`,
         };
       });
 
