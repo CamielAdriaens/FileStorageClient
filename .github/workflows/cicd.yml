@@ -1,3 +1,12 @@
+name: Frontend CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
 jobs:
   build:
     runs-on: ubuntu-latest
