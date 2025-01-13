@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import './FilePreview.css';
+import axiosInstance from '../utils/axiosinstance'; // Import your axiosInstance
 
 const FilePreview = ({ file, onClose }) => {
   const [fileUrl, setFileUrl] = useState(null);
