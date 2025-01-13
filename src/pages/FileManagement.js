@@ -27,7 +27,7 @@ export const FileManagement = () => {
     }
 
     try {
-      const response = await axiosInstance.get('/api/files/secure-files');
+      const response = await axiosInstance.get('/api/Files/secure-files');
       console.log("Fetched Data:", response.data);
 
       const fetchedFiles = Array.isArray(response.data.$values) ? response.data.$values : response.data;
@@ -64,7 +64,7 @@ export const FileManagement = () => {
     formData.append('file', fileToUpload);
 
     try {
-      const response = await axiosInstance.post('/api/files/upload', formData);
+      const response = await axiosInstance.post('/api/Files/upload', formData);
 
       if (response.status === 200) {
         alert('File uploaded successfully.');
@@ -82,7 +82,7 @@ export const FileManagement = () => {
   // Handle file download
   const handleFileDownload = async (mongoFileId, fileName) => {
     try {
-      const response = await axiosInstance.get(`/api/files/download/${mongoFileId}`, { responseType: 'blob' });
+      const response = await axiosInstance.get(`/api/Files/download/${mongoFileId}`, { responseType: 'blob' });
 
       if (response.status === 200) {
         const blob = response.data;
@@ -108,7 +108,7 @@ export const FileManagement = () => {
     if (!window.confirm('Are you sure you want to delete this file?')) return;
 
     try {
-      const response = await axiosInstance.delete(`/api/files/delete/${fileId}`);
+      const response = await axiosInstance.delete(`/api/Files/delete/${fileId}`);
 
       if (response.status === 200) {
         alert('File deleted successfully.');
@@ -141,7 +141,7 @@ export const FileManagement = () => {
     }
 
     try {
-      const response = await axiosInstance.post('/api/files/share-file', {
+      const response = await axiosInstance.post('/api/Files/share-file', {
         recipientEmail,
         mongoFileId,
         fileName,
@@ -163,7 +163,7 @@ export const FileManagement = () => {
   // Fetch pending shares
   const fetchPendingShares = async () => {
     try {
-      const response = await axiosInstance.get('/api/files/pending-shares');
+      const response = await axiosInstance.get('/api/Files/pending-shares');
       setPendingShares(response.data.$values || []);
     } catch (error) {
       console.error('Error fetching pending shares:', error);
@@ -173,7 +173,7 @@ export const FileManagement = () => {
   // Accept file share
   const handleAcceptShare = async (shareId) => {
     try {
-      const response = await axiosInstance.post(`/api/files/accept-share/${shareId}`);
+      const response = await axiosInstance.post(`/api/Files/accept-share/${shareId}`);
       if (response.status === 200) {
         alert('File share accepted.');
         fetchPendingShares();
@@ -190,7 +190,7 @@ export const FileManagement = () => {
   // Refuse file share
   const handleRefuseShare = async (shareId) => {
     try {
-      const response = await axiosInstance.delete(`/api/files/refuse-share/${shareId}`);
+      const response = await axiosInstance.delete(`/api/Files/refuse-share/${shareId}`);
       if (response.status === 200) {
         alert('File share refused.');
         fetchPendingShares();

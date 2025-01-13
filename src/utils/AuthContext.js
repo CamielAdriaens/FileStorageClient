@@ -15,7 +15,7 @@ export const AuthProvider = ({ children }) => {
   // Function to authenticate with backend
   const authenticateWithBackend = async (token) => {
     try {
-      const response = await axiosInstance.post('/api/auth/google', {
+      const response = await axiosInstance.post('/api/Auth/google', {
         Credential: token,
       });
 

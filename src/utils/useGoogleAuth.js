@@ -11,7 +11,7 @@ export function useGoogleAuth() {
     const token = response.credential;
 
     // Send the token to the backend for validation via axiosInstance
-    axiosInstance.post('/api/auth/google', { Credential: token })
+    axiosInstance.post('/api/Auth/google', { Credential: token })
       .then(response => {
         if (response.data.jwt) {
           // Store the JWT token in localStorage
