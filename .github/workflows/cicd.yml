@@ -19,17 +19,14 @@ jobs:
       # Step 2: Install Dependencies
       - name: Install Dependencies
         run: npm install
-        working-directory: filestorageclient
 
       # Step 3: Run Tests
       - name: Run Tests
         run: npm test
-        working-directory: filestorageclient
 
       # Step 4: Build the Project
       - name: Build Project
         run: npm run build
-        working-directory: filestorageclient
 
       # Step 5: Docker Setup (optional for deployment)
       - name: Set up Docker Buildx
@@ -45,4 +42,3 @@ jobs:
         run: |
           docker build -t camieladriaen/dockertestfilestorage-frontend:${{ github.sha }} .
           docker push camieladriaen/dockertestfilestorage-frontend:${{ github.sha }}
-        working-directory: filestorageclient
