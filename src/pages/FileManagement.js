@@ -1,10 +1,11 @@
-import React, { useCallback, useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import '../App.css';
 import './FileManagement.css';
 import SearchFilter from './SearchFilter';
 import FilePreview from './FilePreview';
 import axiosInstance from '../utils/axiosinstance'; // Import your axiosInstance
+import * as signalR from '@microsoft/signalr'; // Import SignalR
 
 export const FileManagement = () => {
   const { isSignedIn, userId } = useAuth(); // Assumes `userId` is available from AuthContext
@@ -16,9 +17,57 @@ export const FileManagement = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [recipientEmail, setRecipientEmail] = useState('');
   const [pendingShares, setPendingShares] = useState([]);
+  const [newActivity, setNewActivity] = useState(null); // New activity state for real-time updates
 
   const token = localStorage.getItem('token'); // Token will be used in axiosInstance
+  const connectionRef = useRef(null); // SignalR connection
+ // Establish SignalR connection
+ useEffect(() => {
+  const connectSignalR = async () => {
+    if (connectionRef.current) {
+      console.log('SignalR connection already established.');
+      return; // Skip if already connected
+    }
 
+    const hubConnection = new signalR.HubConnectionBuilder()
+      .withUrl("https://localhost:44332/file-sharing-hub") // Your SignalR hub URL
+      .configureLogging(signalR.LogLevel.Information) // Optional: Log SignalR messages for debugging
+      .build();
+
+    // Listen for real-time activity updates from the SignalR hub
+    hubConnection.on("ReceiveMessage", (message) => {
+      console.log("Received message:", message);
+      setNewActivity({ message, timestamp: new Date().toLocaleString() });
+    });
+
+    try {
+      // Start the SignalR connection
+      await hubConnection.start();
+      console.log("SignalR connection established.");
+      connectionRef.current = hubConnection; // Store the connection in the ref
+    } catch (error) {
+      console.error("Error while starting SignalR connection:", error);
+    }
+  };
+
+  connectSignalR();
+
+  return () => {
+    if (connectionRef.current) {
+      console.log("Cleaning up SignalR connection...");
+      connectionRef.current.stop();
+      console.log("SignalR connection stopped.");
+      connectionRef.current = null;
+    }
+  };
+}, []);
+
+// Add new activity to activities state
+useEffect(() => {
+  if (newActivity) {
+    setActivities((prev) => [newActivity, ...prev]);
+  }
+}, [newActivity]);
   // Fetch files from the server
   const fetchFiles = useCallback(async () => {
     if (!token) {
@@ -71,7 +120,7 @@ export const FileManagement = () => {
   }, [fetchFiles, fetchPendingShares, isSignedIn]);
 
  // Handle file upload
-const handleFileChange = async (event) => {
+ const handleFileChange = async (event) => {
   const fileToUpload = event.target.files[0];
   if (!fileToUpload) {
     alert('Please select a file to upload.');
@@ -82,7 +131,6 @@ const handleFileChange = async (event) => {
   formData.append('file', fileToUpload);
 
   try {
-    // Ensure axios instance is correctly configured
     const response = await axiosInstance.post('/api/Files/upload', formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
@@ -91,8 +139,12 @@ const handleFileChange = async (event) => {
 
     if (response.status === 200) {
       alert('File uploaded successfully.');
-      fetchFiles(); // Refresh file list
+      fetchFiles();
       addActivity(`Uploaded file: ${fileToUpload.name}`);
+      // Send real-time notification
+      if (connectionRef.current) {
+        connectionRef.current.invoke("SendMessageToUser", userId, `Uploaded file: ${fileToUpload.name}`);
+      }
     } else {
       throw new Error(`File upload failed: ${response.statusText}`);
     }
@@ -101,6 +153,7 @@ const handleFileChange = async (event) => {
     alert('Error uploading file. Please try again.');
   }
 };
+
   // Handle file download
   const handleFileDownload = async (mongoFileId, fileName) => {
     try {
@@ -171,15 +224,18 @@ const handleShareFile = async (mongoFileId, fileName) => {
 
     if (response.status === 200) {
       alert(`File "${fileName}" shared successfully.`);
-      setRecipientEmail(''); // Clear input field
+      setRecipientEmail('');
       addActivity(`Shared file "${fileName}" with ${recipientEmail}`);
+      // Send real-time notification
+      if (connectionRef.current) {
+        connectionRef.current.invoke("SendMessageToUser", userId, `Shared file "${fileName}" with ${recipientEmail}`);
+      }
     } else {
       throw new Error('Failed to share file.');
     }
   } catch (error) {
     console.error('Error sharing file:', error);
 
-    // Handle the specific case where the user is trying to share a file with themselves
     if (error.response && error.response.status === 400 && error.response.data === "You cannot share files with your own email.") {
       alert("You cannot share a file with your own email.");
     } else {
@@ -187,6 +243,8 @@ const handleShareFile = async (mongoFileId, fileName) => {
     }
   }
 };
+
+
 const handleAcceptShare = async (shareId, fileName) => {
   try {
     const response = await axiosInstance.post(`/api/Files/accept-share/${shareId}`);
@@ -255,6 +313,7 @@ const handleRefuseShare = async (shareId, fileName) => {
       fetchPendingShares();
     }
   }, [fetchFiles, isSignedIn]);
+  const displayedActivities = newActivity ? [...activities, newActivity] : activities;
 
   return (
     <div className="main-content fade-in">
