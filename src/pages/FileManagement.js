@@ -1,3 +1,5 @@
+/*global google*/
+
 import React, { useCallback, useState, useEffect, useRef } from 'react';
 import { useAuth } from '../utils/AuthContext';
 import '../App.css';
@@ -30,7 +32,7 @@ export const FileManagement = () => {
     }
 
     const hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl("https://localhost:44332/file-sharing-hub") // Your SignalR hub URL
+      .withUrl("https://localhost:8080/file-sharing-hub") // Your SignalR hub URL
       .configureLogging(signalR.LogLevel.Information) // Optional: Log SignalR messages for debugging
       .build();
 
