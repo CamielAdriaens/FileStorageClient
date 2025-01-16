@@ -8,6 +8,8 @@ import SearchFilter from './SearchFilter';
 import FilePreview from './FilePreview';
 import axiosInstance from '../utils/axiosinstance'; // Import your axiosInstance
 import * as signalR from '@microsoft/signalr'; // Import SignalR
+import { toast, ToastContainer } from 'react-toastify'; // Import Toastify
+import 'react-toastify/dist/ReactToastify.css'; // Import Toastify styles
 
 export const FileManagement = () => {
   const { isSignedIn, userId } = useAuth(); // Assumes `userId` is available from AuthContext
@@ -23,47 +25,60 @@ export const FileManagement = () => {
 
   const token = localStorage.getItem('token'); // Token will be used in axiosInstance
   const connectionRef = useRef(null); // SignalR connection
- // Establish SignalR connection
- useEffect(() => {
-  const connectSignalR = async () => {
-    if (connectionRef.current) {
-      console.log('SignalR connection already established.');
-      return; // Skip if already connected
-    }
-
-    const hubConnection = new signalR.HubConnectionBuilder()
-      .withUrl("http://localhost:8080/file-sharing-hub") // Your SignalR hub URL
-      .configureLogging(signalR.LogLevel.Information) // Optional: Log SignalR messages for debugging
-      .build();
-
-    // Listen for real-time activity updates from the SignalR hub
-    hubConnection.on("ReceiveMessage", (message) => {
-      console.log("Received message:", message);
-      setNewActivity({ message, timestamp: new Date().toLocaleString() });
-    });
-
-    try {
-      // Start the SignalR connection
-      await hubConnection.start();
-      console.log("SignalR connection established.");
-      connectionRef.current = hubConnection; // Store the connection in the ref
-    } catch (error) {
-      console.error("Error while starting SignalR connection:", error);
-    }
-  };
-
-  connectSignalR();
-
-  return () => {
-    if (connectionRef.current) {
-      console.log("Cleaning up SignalR connection...");
-      connectionRef.current.stop();
-      console.log("SignalR connection stopped.");
-      connectionRef.current = null;
-    }
-  };
-}, []);
-
+  useEffect(() => {
+    const connectSignalR = async () => {
+      if (connectionRef.current) {
+        console.log('SignalR connection already established.');
+        return; // Skip if already connected
+      }
+  
+      const hubConnection = new signalR.HubConnectionBuilder()
+        .withUrl("https://localhost:44332/file-sharing-hub") // Your SignalR hub URL
+        .configureLogging(signalR.LogLevel.Information) // Optional: Log SignalR messages for debugging
+        .build();
+  
+        hubConnection.on("ReceiveMessage", (message) => {
+          console.log("Received message:", message);
+        
+          if (message.includes("File shared")) {
+            toast.info(`📥 ${message}`, {
+              position: "top-right",
+              autoClose: 5000,
+              hideProgressBar: false,
+              closeOnClick: true,
+              pauseOnHover: true,
+              draggable: true,
+              progress: undefined,
+            });
+        
+            // Re-fetch pending shares to update the list
+            fetchPendingShares();
+          }
+        });
+        
+      
+      try {
+        // Start the SignalR connection
+        await hubConnection.start();
+        console.log("SignalR connection established.");
+        connectionRef.current = hubConnection; // Store the connection in the ref
+      } catch (error) {
+        console.error("Error while starting SignalR connection:", error);
+      }
+    };
+  
+    connectSignalR();
+  
+    return () => {
+      if (connectionRef.current) {
+        console.log("Cleaning up SignalR connection...");
+        connectionRef.current.stop();
+        console.log("SignalR connection stopped.");
+        connectionRef.current = null;
+      }
+    };
+  }, []);
+  
 // Add new activity to activities state
 useEffect(() => {
   if (newActivity) {
@@ -104,23 +119,22 @@ useEffect(() => {
   }, [token]);
 
   // Fetch pending shares from the server
-  const fetchPendingShares = useCallback(async () => {
-    try {
+const fetchPendingShares = useCallback(async () => {
+  try {
       const response = await axiosInstance.get('/api/Files/pending-shares');
-      setPendingShares(response.data || []);
-    } catch (error) {
+      setPendingShares(response.data || []);  // Set pending shares
+  } catch (error) {
       console.error('Error fetching pending shares:', error);
-    }
-  }, []);
+  }
+}, []);
 
-  // useEffect for fetching files and pending shares
-  useEffect(() => {
-    if (isSignedIn) {
-      fetchFiles();
-      fetchPendingShares(); // Fetch pending shares when signed in
-    }
-  }, [fetchFiles, fetchPendingShares, isSignedIn]);
-
+// Fetch files and pending shares when component mounts or when the user signs in
+useEffect(() => {
+  if (isSignedIn) {
+      fetchFiles();  // Fetch files
+      fetchPendingShares(); // Fetch pending shares
+  }
+}, [fetchFiles, fetchPendingShares, isSignedIn]);
  // Handle file upload
  const handleFileChange = async (event) => {
   const fileToUpload = event.target.files[0];
@@ -320,6 +334,7 @@ const handleRefuseShare = async (shareId, fileName) => {
   return (
     <div className="main-content fade-in">
       <h2>File Management</h2>
+      <ToastContainer /> {/* Toast container for displaying notifications */}
       {isSignedIn ? (
         <>
           <SearchFilter onSearch={handleSearch} onFilter={handleFilter} />
