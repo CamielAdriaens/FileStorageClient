@@ -33,7 +33,7 @@ export const FileManagement = () => {
       }
   
       const hubConnection = new signalR.HubConnectionBuilder()
-        .withUrl("https://localhost:44332/file-sharing-hub") // Your SignalR hub URL
+        .withUrl("http://localhost:8080/file-sharing-hub") // Your SignalR hub URL
         .configureLogging(signalR.LogLevel.Information) // Optional: Log SignalR messages for debugging
         .build();
   
