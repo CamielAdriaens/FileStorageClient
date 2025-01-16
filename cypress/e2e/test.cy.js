@@ -1,3 +1,6 @@
+/*global google*/
+
+
 import 'cypress-file-upload';
 
 describe('File Management E2E Tests', () => {
