@@ -8,11 +8,13 @@
     "axios": "^1.7.9",
     "dotenv": "^16.4.7",
     "jwt-decode": "^4.0.0",
+    "playwright": "^1.49.1",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
     "react-scripts": "^5.0.1",
     "react-toastify": "^11.0.3",
+    "vitest": "^3.0.2",
     "web-vitals": "^2.1.4"
   },
   "scripts": {
@@ -40,6 +42,7 @@
     ]
   },
   "devDependencies": {
+    "@playwright/test": "^1.49.1",
     "@testing-library/react": "^16.1.0",
     "@testing-library/user-event": "^14.5.2",
     "@vitejs/plugin-react": "^4.3.4",
